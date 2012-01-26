@@ -1,0 +1,50 @@
+koi8-r
+
+T_ranslation		Т_рансляция
+_File				_Файл
+Compile				Компилировать
+_Text				_Текст
+Sharp Comment		Закомментировать #
+Sharp Uncomment		Раскомментировать #
+Shift Left			Сдвинуть влево
+Shift Right			Сдвинуть вправо
+_Settings			_Настройки
+untitled			безымянный
+Name				Имя
+Select profile		Выберите профиль
+Open file			Открыть файл
+Save file			Сохранить файл
+All known			Все известные
+All files			Все файлы
+File				Файл
+file				файл
+already exists		уже существует
+Overwrite file?		Перезаписать файл?
+File rename error	Ошибка при переименовании файла
+back				обратно
+File write error	Ошибка записи в файл
+File read error		Ошибка чтения файла
+Select font			Выберите шрифт
+Error				Ошибка
+Compile error		Ошибка при компиляции
+Save changes?		Сохранить изменения?
+file not found		файл не найден
+can not lookup profile by file extension	не могу определить профиль по расширению файла
+Text convert error	Ошибка при преобразовании текста
+all done			всё сделано
+WARNING				ВНИМАНИЕ
+Select file encoding	Выберите кодировку файла
+system encoding		кодировка системы
+auto-detected encoding	кодировка, определённая автоматически
+
+Replace All			Заменить все
+Find Next			Найти следующее
+Replace				Заменить
+Find:				Найти:
+Replace:			Заменить:
+Reverse Direction	Назад
+Ignore Case			Не учитывать регистр
+Find First			Найти первое
+Replace & Find		Найти и заменить
+Close				Закрыть
+Find / Replace		Найти / Заменить

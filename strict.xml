@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<style-scheme id="strict" _name="Strict" version="1.0">
+	<author>Alexander Shiryaev</author>
+	<_description>Strict color scheme</_description>
+
+	<color name="black" value="#000000" />
+	<color name="red" value="#FF0000" />
+	<color name="blue" value="#0000FF" />
+	<color name="yellow" value="#FFFF00" />
+	<color name="grey" value="#808080"/>
+
+	<style name="def:comment" foreground="grey" italic="true" bold="false" />
+	<style name="def:note" foreground="black" background="#FFFF40" bold="true" italic="false"/>
+	<style name="def:underlined" foreground="blue" underline="true" />
+
+	<style name="oberon:unsafe" foreground="red" />
+	<style name="oberon:flowbreaks" bold="true" />
+	<style name="oberon:export" bold="true" />
+
+	<style name="oberon:redundant-spaces" background="#FFFF80" />
+	<style name="oberon:invalid-indent" background="#FFFF80" />
+</style-scheme>

@@ -1,0 +1,183 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+Alexander Shiryaev, 2011
+
+Zonnon programming language
+-->
+
+<language id="zonnon" _name="Zonnon" version="2.0" _section="Sources">
+
+	<metadata>
+		<property name="globs">*.znn</property>
+	</metadata>
+
+	<styles>
+		<style id="comment" _name="Comment" map-to="def:comment" />
+		<style id="keyword" _name="Keyword" map-to="def:keyword" />
+		<style id="modifier" _name="Modifier" map-to="def:type" />
+		<style id="type" _name="Data Type" map-to="def:type" />
+		<style id="boolean" _name="Boolean value" map-to="def:boolean" />
+		<style id="nil" _name="Nil" map-to="def:special-constant" />
+		<style id="string" _name="String" map-to="def:string" />
+		<style id="builtin-procedure" _name="Builtin Procedure" map-to="def:builtin" />
+		<style id="flowbreaks" _name="Flowbreaks" map-to="def:keyword" />
+	</styles>
+
+	<definitions>
+		<context id="zonnon">
+			<include>
+
+				<context id="comment" style-ref="comment">
+					<start>\(\*</start>
+					<end>\*\)</end>
+					<include>
+						<context ref="def:in-comment" />
+						<context ref="comment" />
+					</include>
+				</context>
+
+				<context id="string-1" style-ref="string">
+					<start>'</start>
+					<end>'</end>
+				</context>
+
+				<context id="string-2" style-ref="string">
+					<start>"</start>
+					<end>"</end>
+				</context>
+
+				<context id="flowbreaks" style-ref="flowbreaks">
+					<keyword>return</keyword> <!-- reserved word -->
+					<keyword>exit</keyword> <!-- reserved word -->
+					<keyword>assert</keyword> <!-- predefined procedure -->
+					<keyword>halt</keyword> <!-- predefined procedure -->
+				</context>
+
+				<!-- reserved words -->
+				<context id="keyword" style-ref="keyword">
+					<!-- module -->
+					<keyword>implementation</keyword>
+					<keyword>definition</keyword>
+					<keyword>refines</keyword>
+					<keyword>module</keyword>
+
+					<keyword>import</keyword>
+
+					<!-- declarations -->
+					<keyword>const</keyword>
+					<keyword>type</keyword>
+					<keyword>operator</keyword>
+					<keyword>procedure</keyword>
+
+					<keyword>begin</keyword>
+					<keyword>end</keyword>
+
+					<keyword>do</keyword>
+					<keyword>of</keyword>
+					<keyword>implements</keyword>
+					<keyword>accept</keyword>
+					<keyword>as</keyword>
+					<keyword>new</keyword>
+					<keyword>self</keyword>
+					<keyword>var</keyword>
+
+					<!-- condition statements -->
+					<keyword>if</keyword>
+					<keyword>then</keyword>
+					<keyword>else</keyword>
+					<keyword>elsif</keyword>
+					<keyword>case</keyword>
+
+					<!-- loops -->
+					<keyword>while</keyword>
+					<keyword>repeat</keyword>
+					<keyword>until</keyword>
+					<keyword>for</keyword>
+					<keyword>to</keyword>
+					<keyword>by</keyword>
+					<keyword>loop</keyword>
+
+					<!-- predefined operators -->
+					<keyword>div</keyword>
+					<keyword>mod</keyword>
+					<keyword>or</keyword>
+					<keyword>in</keyword>
+					<keyword>is</keyword>
+
+					<!-- types -->
+					<keyword>array</keyword>
+					<keyword>record</keyword>
+					<keyword>object</keyword>
+					<keyword>protocol</keyword>
+
+					<keyword>activity</keyword>
+					<keyword>await</keyword>
+
+					<keyword>on</keyword>
+					<keyword>exception</keyword>
+					<keyword>termination</keyword>
+				</context>
+
+				<context id="modifier" style-ref="modifier">
+					<keyword>public</keyword>
+					<keyword>private</keyword>
+					<keyword>ref</keyword>
+					<keyword>protected</keyword>
+					<keyword>value</keyword>
+					<keyword>math</keyword>
+					<keyword>shared</keyword>
+				</context>
+
+				<context id="type" style-ref="type">
+					<keyword>boolean</keyword>
+					<keyword>char</keyword>
+					<keyword>integer</keyword>
+					<keyword>cardinal</keyword>
+					<keyword>fixed</keyword>
+					<keyword>real</keyword>
+					<keyword>set</keyword>
+					<keyword>string</keyword>
+					<keyword>range</keyword>
+				</context>
+
+				<context id="boolean" style-ref="boolean">
+					<keyword>true</keyword> <!-- reserved word -->
+					<keyword>false</keyword> <!-- reserved word -->
+				</context>
+
+				<context id="nil" style-ref="nil">
+					<keyword>nil</keyword> <!-- reserved word -->
+				</context>
+
+				<context id="builtin-procedure" style-ref="builtin-procedure">
+					<!-- predefined procedures -->
+					<keyword>abs</keyword>
+					<keyword>cap</keyword>
+					<keyword>copy</keyword>
+					<keyword>copyvalue</keyword>
+					<keyword>dec</keyword>
+					<keyword>excl</keyword>
+					<keyword>inc</keyword>
+					<keyword>len</keyword>
+					<keyword>low</keyword>
+					<keyword>max</keyword>
+					<keyword>min</keyword>
+					<keyword>odd</keyword>
+					<keyword>pred</keyword>
+					<keyword>reason</keyword>
+					<keyword>size</keyword>
+					<keyword>succ</keyword>
+
+					<!-- input-output predefined procedures -->
+					<keyword>read</keyword>
+					<keyword>readln</keyword>
+					<keyword>write</keyword>
+					<keyword>writeln</keyword>
+				</context>
+
+			</include>
+		</context>
+	</definitions>
+
+</language>
