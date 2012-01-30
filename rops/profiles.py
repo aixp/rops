@@ -814,6 +814,14 @@ def umbrielCompile (text, encodedText, encoding, fileName):
 
 	return cocodrivers.toCompileResult( cocodrivers.Umbriel.Process(text) )
 
+# fileName may be None
+def oberon0Compile (text, encodedText, encoding, fileName):
+	assert type(text) is unicode
+	assert type(encodedText) is str
+	assert encoding != None
+
+	return cocodrivers.toCompileResult( cocodrivers.Oberon0.Process(text) )
+
 _ppyCocoLineCol = re.compile("^file ([^ ]+) : \(([0-9]+), ([0-9]+)\) (.+)$")
 
 # fileName may be None
@@ -1117,6 +1125,16 @@ umbriel = {
 	'lineSep': '\n',
 }
 
+oberon0 = {
+	'name': 'Oberon0',
+	'lang': 'oberon', # gtksourceview
+	'style': ('strict',), # gtksourceview
+	'extensions': ('ob0',),
+	'compile': oberon0Compile,
+	'empty': modObEmpty,
+	'lineSep': '\n',
+}
+
 pyCoco = {
 	'name': 'py-coco',
 	# 'style': ('strict',), # gtksourceview
@@ -1131,7 +1149,7 @@ profiles = (
 	python, lua,
 	ocaml,
 	c, cxx,
-	umbriel,
+	umbriel, oberon0,
 	pyCoco,
 )
 

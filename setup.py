@@ -3,7 +3,7 @@ from distutils.core import setup
 setup(
 	name = "ROPS",
 	packages = ["rops",],
-	version = "0.3",
+	version = "0.4",
 	platforms = ['POSIX', 'Windows'],
 	description = "Simple text editor",
 	author = "Alexander Shiryaev",
