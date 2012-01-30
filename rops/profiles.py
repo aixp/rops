@@ -1126,7 +1126,7 @@ umbriel = {
 }
 
 oberon0 = {
-	'name': 'Oberon0',
+	'name': 'Oberon-0',
 	'lang': 'oberon', # gtksourceview
 	'style': ('strict',), # gtksourceview
 	'extensions': ('ob0',),
