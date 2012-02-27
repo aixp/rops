@@ -11,5 +11,5 @@ setup(
 	url = "http://hep.msu.dubna.ru/~shiryaev/rops/",
 	download_url = "http://hep.msu.dubna.ru/~shiryaev/files/rops/rops-0.3.tar.gz",
 	keywords = ["oberon", "component pascal", "zonnon"],
-	package_data = { 'rops': ['ide.glade', 'translations/*', 'cocodrivers/*.*', 'cocodrivers/Umbriel/*'] },
+	package_data = { 'rops': ['ide.glade', 'translations/*', 'cocodrivers/*.*', 'cocodrivers/Umbriel/*', 'cocodrivers/Oberon0/*'] },
 )
