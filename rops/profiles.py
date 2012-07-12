@@ -350,7 +350,7 @@ def gpcpCompile (text, encodedText, encoding, fileName):
 		msg = u"'MODULE Ident;' expected"
 		return (msg, None, None)
 
-_paLineCol = re.compile('^ *([0-9]+) +([0-9]+): *([^\n]+)\n')
+_paLineCol = re.compile('^ *([0-9]+) +([0-9]+) *(Error|Warning): *([^\n]+)\n')
 
 # fileName may be None
 def astrobeCompile (text, encodedText, encoding, fileName):
@@ -410,7 +410,6 @@ def astrobeCompile (text, encodedText, encoding, fileName):
 						else:
 							msg = 'wine AstrobeCompile: ' + exMsg(e)
 							return (msg, None, None)
-				# указываем кодировку вывода такую же, как и кодировка содержимого файла, хотя скорее всего dcc32 использует только ascii-кодировку
 				msg = e + o.decode( encoding )
 
 				eLines = e.count('\n')
@@ -428,8 +427,8 @@ def astrobeCompile (text, encodedText, encoding, fileName):
 						col = int(r.group(2)) - 1
 						pos = (line, col)
 						link = (i, pos)
-						m = r.group(3)
-						if m.startswith('!'):
+						m = r.group(4)
+						if r.group(3) == 'Warning':
 							warns.append(link)
 						else:
 							errs.append(link)
