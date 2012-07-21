@@ -1,6 +1,6 @@
 #! /usr/bin/env python2.7
 # -*- coding: koi8-r -*-
-# Alexander Shiryaev, 2010-2011
+# Alexander Shiryaev, 2010-2012
 #
 # IMPLEMENTATION NOTES:
 #	имена файлов храним в кодировке системы (locale.getpreferredlocale())
@@ -633,6 +633,50 @@ def doFind (start, textToFindEncoded, backward, ignoreCase):
 			found = start.forward_search(textToFindEncoded, 0, None)
 	return found
 
+def doPrint (parent, textView, fileName):
+	assert type(fileName) is unicode
+
+	def on_begin_print (operation, context, compositor):
+		while not compositor.paginate(context):
+			pass
+		nPages = compositor.get_n_pages()
+		operation.set_n_pages(nPages)
+
+	def on_draw_page (operation, context, pageNum, compositor):
+		compositor.draw_page(context, pageNum)
+
+	if GTKSV:
+		# parent = textView.get_toplevel()
+		buffer = textView.get_buffer()
+
+		compositor = gtksv.print_compositor_new_from_view(textView)
+		compositor.set_wrap_mode(gtk.WRAP_WORD_CHAR) # gtk.WRAP_CHAR | gtk.WRAP_NONE | gtk.WRAP_WORD | gtk.WRAP_WORD_CHAR
+		compositor.set_highlight_syntax(True)
+		# compositor.set_print_line_numbers(5)
+
+		if fileName == u'':
+			compositor.set_print_header(False)
+			compositor.set_print_footer(False)
+		else:
+			# set header and footer
+			# %N -- page number, %Q -- number of pages
+			# see man 3 strftime (%Y -- year, %m -- month, %d -- day, ...)
+			compositor.set_header_format(True, '', fileName, '%N/%Q')
+			compositor.set_print_header(True)
+			compositor.set_print_footer(False)
+
+		printOp = gtk.PrintOperation()
+		printOp.connect("begin-print", on_begin_print, compositor)
+		printOp.connect("draw-page", on_draw_page, compositor)
+		res = printOp.run(gtk.PRINT_OPERATION_ACTION_PRINT_DIALOG, parent)
+
+		#if res == gtk.PRINT_OPERATION_RESULT_ERROR:
+		#	if Trace: 'print error'
+		#else:
+		#	if Trace: 'print ok'
+	else: # not GTKSV
+		print 'gtksourceview module required for printing'
+
 class Application:
 
 ################################## Find window ################################
@@ -1009,6 +1053,15 @@ class Application:
 	def on_save_as (self, widget, data=None):
 		if Trace: print 'save as'
 		r = self.do_save(saveAs=True)
+
+	def on_print (self, widget, data=None):
+		if Trace: print 'print'
+
+		if self.mod['fileName'] == None:
+			fName = u''
+		else:
+			fName = os.path.basename(self.mod['fileName']).decode(locale.getpreferredencoding())
+		doPrint(self.mainWindow, self.srcTextView, fName)
 
 	def on_textview1_expose_event (self, widget, data=None):
 		# if Trace: print 'src expose event'
