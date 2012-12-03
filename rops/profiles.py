@@ -1,7 +1,7 @@
 # -*- coding: koi8-r -*-
 # Alexander Shiryaev, 2010-2012
 
-import compiler, re, subprocess, os, sys, locale, tempfile, time
+import compiler, re, subprocess, os, sys, locale, tempfile, time, errno
 import util, winenc
 from translate import tr
 import cocodrivers
@@ -64,7 +64,7 @@ def cmdPollOnly (args):
 			except IOError, ex:
 				if ex.strerror == 'Resource temporarily unavailable':
 					pass
-				elif ex.errno == 35: # 'Resource temporarily unavailable'
+				elif ex.errno == errno.EAGAIN: # 'Resource temporarily unavailable'
 					pass
 				else:
 					print 'e IOerror', repr(ex)
@@ -80,7 +80,7 @@ def cmdPollOnly (args):
 			except IOError, ex:
 				if ex.strerror == 'Resource temporarily unavailable':
 					pass
-				elif ex.errno == 35: # 'Resource temporarily unavailable'
+				elif ex.errno == errno.EAGAIN: # 'Resource temporarily unavailable'
 					pass
 				else:
 					print 'o IOError', repr(ex)
