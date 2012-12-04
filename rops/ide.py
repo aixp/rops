@@ -406,8 +406,11 @@ def SelectItem (parent, title, name, items):
 		x = tv.get_selection().get_selected()
 		model, iter = x
 		assert model == listStore
-		path = listStore.get_path(iter)
-		idx = path[0]
+		if iter == None: # gtk @ Ubuntu behavior
+			idx = 0
+		else:
+			path = listStore.get_path(iter)
+			idx = path[0]
 		resp = idx
 	elif resp in (gtk.RESPONSE_CANCEL,gtk.RESPONSE_DELETE_EVENT):
 		resp = None
