@@ -19,11 +19,19 @@ def sameFile (fn1, fn2):
 	else:
 		return os.path.samefile(fn1, fn2)
 
-def cmd (args):
+def cmd (args, input=None):
 	if Trace: print 'cmd', args
 
+	if input == None:
+		inp = None
+	else:
+		inp = subprocess.PIPE
+
 	close_fds = not mswindows
-	p = subprocess.Popen(args, bufsize=8192, stdout=subprocess.PIPE, stderr=subprocess.PIPE, close_fds=close_fds)
+	p = subprocess.Popen(args, bufsize=8192, stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=inp, close_fds=close_fds)
+
+	if input != None:
+		p.stdin.write(input)
 
 	o, e = p.communicate()
 
@@ -175,6 +183,65 @@ def oo2cCompile (text, encodedText, encoding, fileName):
 	else:
 		msg = u"'MODULE Ident;' expected"
 		return (msg, None, None)
+
+def posToLineCol (src, pos):
+	line = 0
+	for l in map(len, src.split('\n')): # XXX: split
+		if pos > l + 1:
+			pos = pos - l - 1
+			line = line + 1
+		else:
+			return (line, pos)
+
+_dev0Pos = re.compile("^  pos =  ([0-9]+), error = '([^']+)'$")
+
+def dev0Compile (text, encodedText, encoding, fileName):
+	assert type(text) is unicode
+	assert type(encodedText) is str
+	assert encoding != None
+
+	xCmd = 'blackbox'
+
+	fd, name = tempfile.mkstemp()
+	try:
+		try:
+			try:
+				os.write(fd, encodedText)
+			except Exception, e:
+				msg = tr('#File write error') + ': ' + exMsg(e)
+				return (msg, None, None)
+		finally:
+			try:
+				os.close(fd)
+			except:
+				pass
+		try:
+			e, o = cmd([xCmd], "ConsCompiler.Compile('%s', '%s')\n" % (os.path.dirname(name), os.path.basename(name),))
+		except Exception, e:
+			msg = xCmd + ': ' + exMsg(e)
+			return (msg, None, None)
+	finally:
+		try:
+			os.remove(name)
+		except:
+			pass
+
+	msg = e + o.decode( encoding )
+
+	eLines = e.count('\n')
+	errs = []
+	warns = []
+	i = eLines
+	for l in o.split('\n'):
+		r = _dev0Pos.match(l)
+		if r != None:
+			line, col = posToLineCol(text, int(r.group(1)))
+			error = r.group(2)
+			pos = (line, col)
+			link = (i, pos)
+			errs.append(link)
+		i = i + 1
+	return (msg, errs, warns)
 
 # not mswindows
 def winePath (fileName):
@@ -376,7 +443,7 @@ def astrobeCompile (text, encodedText, encoding, fileName):
 				inCurDir = False
 
 		if not os.path.exists(fName):
-			try:
+			try: # for remove file fName
 				try:
 					util.writeFile( fName, encodedText.replace('\t', ' '), sync=False )
 				except Exception, e:
@@ -390,25 +457,32 @@ def astrobeCompile (text, encodedText, encoding, fileName):
 					except Exception, e:
 						msg = 'AstrobeCompile: ' + exMsg(e)
 						return (msg, None, None)
-				else:
-					if not inCurDir:
-						ok, s = winePath(fName)
-						if not ok:
-							return (s, None, None)
-					else:
-						s = baseName
-					try:
-						e, o = cmdPollOnly(["XXXwine", "C:\\Program Files\\Astrobe Professional Edition\\AstrobeCompile.exe", s])
-					except Exception, e:
-						if e.errno == 2:
-							try:
-								e, o = cmdPollOnly(["env", "MONO_IOMAP=all", "mono", os.path.join(os.getenv('HOME'), "install", "Astrobe Professional Edition", "AstrobeCompile.exe"), fName])
-								isMono = True
-							except Exception, e:
-								msg = 'mono AstrobeCompile: ' + exMsg(e)
-								return (msg, None, None)
+				else: # not mswindows
+					tryWine = False
+					if tryWine:
+						if not inCurDir:
+							ok, s = winePath(fName)
+							if not ok:
+								return (s, None, None)
 						else:
-							msg = 'wine AstrobeCompile: ' + exMsg(e)
+							s = baseName
+						try:
+							e, o = cmdPollOnly(["wine", "C:\\Program Files\\Astrobe Professional Edition\\AstrobeCompile.exe", s])
+							tryMono = False
+						except Exception, e:
+							if e.errno == errno.ENOENT:
+								tryMono = True
+							else:
+								msg = 'wine AstrobeCompile: ' + exMsg(e)
+								return (msg, None, None)
+					else:
+						tryMono = True
+					if tryMono:
+						try:
+							e, o = cmdPollOnly(["env", "MONO_IOMAP=all", "mono", os.path.join(os.getenv('HOME'), "install", "Astrobe Professional Edition", "AstrobeCompile.exe"), fName])
+							isMono = True
+						except Exception, e:
+							msg = 'mono AstrobeCompile: ' + exMsg(e)
 							return (msg, None, None)
 				msg = e + o.decode( encoding )
 
@@ -902,6 +976,35 @@ def ocamlCompile (text, encodedText, encoding, fileName):
 	else:
 		return (msg, None, None)
 
+#_ppdflatexLine = re.compile("^([^:]+):([0-9]+): (.+)\.$")
+#
+#def latexCompile (text, encodedText, encoding, fileName):
+#	assert type(text) is unicode
+#	assert type(encodedText) is str
+#	assert encoding != None
+#	assert fileName != None # because compileSavedOnly
+#
+#	try:
+#		e, o = cmd(["pdflatex", "-file-line-error", "-interaction", "nonstopmode", fileName])
+#	except Exception, e:
+#		msg = "pdflatex: " + exMsg(e)
+#		return (msg, None, None)
+#
+#	msg = (e + o).decode( encoding )
+#
+#	warns = []
+#	errs = []
+#	i = 0
+#	for line in msg.split('\n'):
+#		r = _ppdflatexLine.match(line)
+#		if r:
+#			line = int(r.group(2)) - 1
+#			pos = (line, 0)
+#			link = (i, pos)
+#			errs.append(link)
+#		i = i + 1
+#	return (msg, errs, warns)
+
 def winEncoding ():
 	if mswindows:
 		return locale.getpreferredencoding()
@@ -1104,6 +1207,15 @@ obc = {
 	'empty': modObEmpty,
 }
 
+dev0 = {
+	'name': 'BlackBox/Component Pascal',
+	'lang': 'oberon', # gtksourceview
+	'style': ('strict',), # gtksourceview
+	'extensions': ('txt',),
+	'compile': dev0Compile,
+	'empty': modObEmpty,
+}
+
 ocaml = {
 	'name': 'ocamlc/OCaml',
 	'lang': 'objective-caml', # gtksourceview
@@ -1142,6 +1254,17 @@ pyCoco = {
 	'empty': cocoPyAtgEmpty,
 }
 
+#latex = {
+#	'name': 'pdflatex/LaTeX',
+#	'lang': 'latex', # gtksourceview
+#	'style': ('tango', 'kate', 'classic'), # gtksourceview
+#	'extensions': ('tex',),
+#	'compile': cCompile,
+#	'compileSavedOnly': True, # FIXME
+#	'compile': latexCompile,
+#	'empty': '', # FIXME
+#}
+
 profiles = (
 	oo2c, obc, astrobe, gpcp, zc, xcO2, xmO2, xcM2, xmM2, mocka, mikroPascal,
 	dcc32,
@@ -1150,6 +1273,8 @@ profiles = (
 	c, cxx,
 	umbriel, oberon0,
 	pyCoco,
+#	latex,
+	dev0,
 )
 
 def test ():
