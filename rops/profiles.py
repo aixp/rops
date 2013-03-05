@@ -1,5 +1,5 @@
 # -*- coding: koi8-r -*-
-# Alexander Shiryaev, 2010-2012
+# Alexander Shiryaev, 2010-2013
 
 import compiler, re, subprocess, os, sys, locale, tempfile, time, errno
 import util, winenc
@@ -333,6 +333,77 @@ def dcc32Compile (text, encodedText, encoding, fileName):
 						pos = (line, None)
 						link = (i, pos)
 						m = r.group(3)
+						if m.startswith('Error:') or m.startswith('Fatal:'):
+							errs.append(link)
+						else:
+							warns.append(link)
+					i = i + 1
+				return (msg, errs, warns)
+			finally:
+				try:
+					os.remove(fName)
+				except:
+					pass
+		else:
+			msg = "%s: %s %s %s!" % (tr('#Error'), tr('#file'), fName.decode(locale.getpreferredencoding()), tr('#already exists'))
+			return (msg, None, None)
+	else:
+		msg = u"'program ident;' or 'unit ident;' or 'library ident;' expected"
+		return (msg, None, None)
+
+_pfpcLine = re.compile('^([^\(]+)\(([0-9]+),([0-9]+)\) ([^\n]+)\n')
+
+# fileName may be None
+def fpcCompile (text, encodedText, encoding, fileName):
+	assert type(text) is unicode
+	assert type(encodedText) is str
+	assert encoding != None
+
+	r = _pPas.match(text)
+	if r != None:
+		modName = r.group(1).encode('ascii')
+		baseName = modName + '.$$$'
+
+		if fileName == None:
+			fName = baseName
+			# inCurDir = True
+		else:
+			d = os.path.dirname(fileName)
+			if (d == '') or sameFile(os.getcwd(), d):
+				fName = baseName
+				# inCurDir = True
+			else:
+				fName = os.path.join(d, baseName)
+				# inCurDir = False
+
+		if not os.path.exists(fName):
+			try:
+				try:
+					util.writeFile( fName, encodedText.replace('\t', ' '), sync=False )
+				except Exception, e:
+					msg = tr('#File write error') + ': ' + exMsg(e)
+					return (msg, None, None)
+
+				try:
+					e, o = cmd(["fpc", fName])
+				except Exception, e:
+					msg = 'fpc: ' + exMsg(e)
+					return (msg, None, None)
+
+				msg = e + o.decode( encoding )
+
+				eLines = e.count('\n')
+				errs = []
+				warns = []
+				i = eLines
+				for l in o.split('\n'):
+					r = _pfpcLine.match(l + '\n')
+					if r and (r.group(1) == baseName):
+						line = int(r.group(2)) - 1
+						col = int(r.group(3)) - 1
+						pos = (line, col)
+						link = (i, pos)
+						m = r.group(4)
 						if m.startswith('Error:') or m.startswith('Fatal:'):
 							errs.append(link)
 						else:
@@ -1046,11 +1117,11 @@ def modZnEmpty (name):
 
 def delphiEmpty (name):
 	if name == None:
-		text = u'unit ;\n\n(*\n\t\n*)\n\n{$OVERFLOWCHECKS ON}\n{$RANGECHECKS ON}\n\ninterface\n\n\n\nimplementation\n\n\n\nend.'
+		text = u'unit ;\n\n(*\n\t\n*)\n\n(* {$OVERFLOWCHECKS ON} *)\n{$RANGECHECKS ON}\n\ninterface\n\n\n\nimplementation\n\n\n\nend.'
 		line = 0
 		col = 5
 	else:
-		text = u'unit %s;\n\n(*\n\t\n*)\n\n{$OVERFLOWCHECKS ON}\n{$RANGECHECKS ON}\n\ninterface\n\n\n\nimplementation\n\n\n\nend (* %s *).' % (name, name)
+		text = u'unit %s;\n\n(*\n\t\n*)\n\n(* {$OVERFLOWCHECKS ON} *)\n{$RANGECHECKS ON}\n\ninterface\n\n\n\nimplementation\n\n\n\nend (* %s *).' % (name, name)
 		line = 3
 		col = 1
 	return (text, line, col)
@@ -1155,6 +1226,16 @@ dcc32 = {
 	'preferredFileEncoding': winEncoding(),
 	'empty': delphiEmpty,
 	'lineSep': '\r\n', # не обязательно
+}
+
+fpc = {
+	'name': 'fpc/Borland Pascal 7',
+	'lang': 'pascal', # gtksourceview
+	'extensions': ('pas',),
+	'compile': fpcCompile,
+#	'preferredFileEncoding': winEncoding(),
+	'empty': delphiEmpty,
+#	'lineSep': '\r\n', # не обязательно
 }
 
 astrobe = {
@@ -1267,7 +1348,7 @@ pyCoco = {
 
 profiles = (
 	oo2c, obc, astrobe, gpcp, zc, xcO2, xmO2, xcM2, xmM2, mocka, mikroPascal,
-	dcc32,
+	dcc32, fpc,
 	python, lua,
 	ocaml,
 	c, cxx,
