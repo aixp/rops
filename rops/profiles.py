@@ -1047,6 +1047,26 @@ def ocamlCompile (text, encodedText, encoding, fileName):
 	else:
 		return (msg, None, None)
 
+# fileName may be None
+def iverilogCompile (text, encodedText, encoding, fileName):
+	assert type(text) is unicode
+	assert type(encodedText) is str
+	assert encoding != None
+
+	# TODO
+
+	return (u'not implemented', None, None)
+
+# fileName may be None
+def gvhdlCompile (text, encodedText, encoding, fileName):
+	assert type(text) is unicode
+	assert type(encodedText) is str
+	assert encoding != None
+
+	# TODO
+
+	return (u'not implemented', None, None)
+
 #_ppdflatexLine = re.compile("^([^:]+):([0-9]+): (.+)\.$")
 #
 #def latexCompile (text, encodedText, encoding, fileName):
@@ -1306,6 +1326,24 @@ ocaml = {
 	'compileSavedOnly': True, # may be optimized?
 }
 
+iverilog = {
+	'name': 'iverilog/Verilog',
+	'lang': 'verilog', # gtksourceview
+	'style': ('kate',), # gtksourceview
+	'extensions': ('v',),
+	'compile': iverilogCompile,
+	'compileSavedOnly': False,
+}
+
+gvhdl = {
+	'name': 'gvhdl/VHDL',
+	'lang': 'vhdl', # gtksourceview
+	'style': ('kate',), # gtksourceview
+	'extensions': ('vhdl', 'vhd'),
+	'compile': gvhdlCompile,
+	'compileSavedOnly': False,
+}
+
 # test
 umbriel = {
 	'name': 'Umbriel',
@@ -1356,6 +1394,7 @@ profiles = (
 	pyCoco,
 #	latex,
 	dev0,
+	iverilog, gvhdl,
 )
 
 def test ():
