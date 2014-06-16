@@ -530,7 +530,7 @@ def astrobeCompile (text, encodedText, encoding, fileName, isM3):
 					exe = os.path.join( os.getenv('ProgramFiles'), astrobeDir, 'AstrobeCompile.exe' )
 					try:
 						if isM3:
-							e, o = cmd([exe, 'NUL', fName])
+							e, o = cmd([exe, 'config.ini', fName])
 						else:
 							e, o = cmd([exe, fName])
 					except Exception, e:
@@ -547,7 +547,7 @@ def astrobeCompile (text, encodedText, encoding, fileName, isM3):
 							s = baseName
 						try:
 							if isM3:
-								e, o = cmdPollOnly(["wine", "C:\\Program Files\\%s\\AstrobeCompile.exe" % (astrobeDir,), '/dev/null', s])
+								e, o = cmdPollOnly(["wine", "C:\\Program Files\\%s\\AstrobeCompile.exe" % (astrobeDir,), 'config.ini', s])
 							else:
 								e, o = cmdPollOnly(["wine", "C:\\Program Files\\%s\\AstrobeCompile.exe" % (astrobeDir,), s])
 							tryMono = False
@@ -562,7 +562,7 @@ def astrobeCompile (text, encodedText, encoding, fileName, isM3):
 					if tryMono:
 						try:
 							if isM3:
-								e, o = cmdPollOnly(["env", "MONO_IOMAP=all", "mono", os.path.join(os.getenv('HOME'), "install", astrobeDir, "AstrobeCompile.exe"), '/dev/null', fName])
+								e, o = cmdPollOnly(["env", "MONO_IOMAP=all", "mono", os.path.join(os.getenv('HOME'), "install", astrobeDir, "AstrobeCompile.exe"), 'config.ini', fName])
 							else:
 								e, o = cmdPollOnly(["env", "MONO_IOMAP=all", "mono", os.path.join(os.getenv('HOME'), "install", astrobeDir, "AstrobeCompile.exe"), fName])
 							isMono = True
