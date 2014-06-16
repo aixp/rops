@@ -491,10 +491,15 @@ def gpcpCompile (text, encodedText, encoding, fileName):
 _paLineCol = re.compile('^ *([0-9]+) +([0-9]+) *(Error|Warning): *([^\n]+)\n')
 
 # fileName may be None
-def astrobeCompile (text, encodedText, encoding, fileName):
+def astrobeCompile (text, encodedText, encoding, fileName, isM3):
 	assert type(text) is unicode
 	assert type(encodedText) is str
 	assert encoding != None
+
+	if isM3: # Cortex-M3
+		astrobeDir = "AstrobeM3 Professional Edition"
+	else: # LPC2000
+		astrobeDir = "Astrobe Professional Edition"
 
 	r = _pMod.match(text)
 	if r != None:
@@ -522,9 +527,12 @@ def astrobeCompile (text, encodedText, encoding, fileName):
 					return (msg, None, None)
 				isMono = False
 				if mswindows:
-					exe = os.path.join( os.getenv('ProgramFiles'), 'Astrobe Professional Edition', 'AstrobeCompile.exe' )
+					exe = os.path.join( os.getenv('ProgramFiles'), astrobeDir, 'AstrobeCompile.exe' )
 					try:
-						e, o = cmd([exe, fName])
+						if isM3:
+							e, o = cmd([exe, 'NUL', fName])
+						else:
+							e, o = cmd([exe, fName])
 					except Exception, e:
 						msg = 'AstrobeCompile: ' + exMsg(e)
 						return (msg, None, None)
@@ -538,7 +546,10 @@ def astrobeCompile (text, encodedText, encoding, fileName):
 						else:
 							s = baseName
 						try:
-							e, o = cmdPollOnly(["wine", "C:\\Program Files\\Astrobe Professional Edition\\AstrobeCompile.exe", s])
+							if isM3:
+								e, o = cmdPollOnly(["wine", "C:\\Program Files\\%s\\AstrobeCompile.exe" % (astrobeDir,), '/dev/null', s])
+							else:
+								e, o = cmdPollOnly(["wine", "C:\\Program Files\\%s\\AstrobeCompile.exe" % (astrobeDir,), s])
 							tryMono = False
 						except Exception, e:
 							if e.errno == errno.ENOENT:
@@ -550,7 +561,10 @@ def astrobeCompile (text, encodedText, encoding, fileName):
 						tryMono = True
 					if tryMono:
 						try:
-							e, o = cmdPollOnly(["env", "MONO_IOMAP=all", "mono", os.path.join(os.getenv('HOME'), "install", "Astrobe Professional Edition", "AstrobeCompile.exe"), fName])
+							if isM3:
+								e, o = cmdPollOnly(["env", "MONO_IOMAP=all", "mono", os.path.join(os.getenv('HOME'), "install", astrobeDir, "AstrobeCompile.exe"), '/dev/null', fName])
+							else:
+								e, o = cmdPollOnly(["env", "MONO_IOMAP=all", "mono", os.path.join(os.getenv('HOME'), "install", astrobeDir, "AstrobeCompile.exe"), fName])
 							isMono = True
 						except Exception, e:
 							msg = 'mono AstrobeCompile: ' + exMsg(e)
@@ -590,6 +604,10 @@ def astrobeCompile (text, encodedText, encoding, fileName):
 	else:
 		msg = u"'MODULE Ident;' expected"
 		return (msg, None, None)
+
+astrobeCompileLPC2000 = lambda text, encodedText, encoding, fileName: astrobeCompile(text, encodedText, encoding, fileName, False)
+
+astrobeCompileM3 = lambda text, encodedText, encoding, fileName: astrobeCompile(text, encodedText, encoding, fileName, True)
 
 def cCompile (text, encodedText, encoding, fileName):
 	assert type(text) is unicode
@@ -1258,12 +1276,23 @@ fpc = {
 #	'lineSep': '\r\n', # не обязательно
 }
 
-astrobe = {
-	'name': 'Astrobe/Oberon-07',
+astrobeLPC2000 = {
+	'name': 'Astrobe-LPC2000/Oberon-07',
 	'lang': 'oberon', # gtksourceview
 	'style': ('strict',), # gtksourceview
 	'extensions': ('mod',),
-	'compile': astrobeCompile,
+	'compile': astrobeCompileLPC2000,
+	'preferredFileEncoding': winEncoding(),
+	'empty': modObEmpty,
+	'lineSep': '\r\n', # не обязательно
+}
+
+astrobeM3 = {
+	'name': 'Astrobe-M3/Oberon-07',
+	'lang': 'oberon', # gtksourceview
+	'style': ('strict',), # gtksourceview
+	'extensions': ('mod',),
+	'compile': astrobeCompileM3,
 	'preferredFileEncoding': winEncoding(),
 	'empty': modObEmpty,
 	'lineSep': '\r\n', # не обязательно
@@ -1385,7 +1414,7 @@ pyCoco = {
 #}
 
 profiles = (
-	oo2c, obc, astrobe, gpcp, zc, xcO2, xmO2, xcM2, xmM2, mocka, mikroPascal,
+	oo2c, obc, astrobeLPC2000, astrobeM3, gpcp, zc, xcO2, xmO2, xcM2, xmM2, mocka, mikroPascal,
 	dcc32, fpc,
 	python, lua,
 	ocaml,
