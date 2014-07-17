@@ -1,5 +1,5 @@
 # -*- coding: koi8-r -*-
-# Alexander Shiryaev, 2010-2013
+# Alexander Shiryaev, 2010-2014
 
 import compiler, re, subprocess, os, sys, locale, tempfile, time, errno
 import util, winenc
@@ -491,15 +491,19 @@ def gpcpCompile (text, encodedText, encoding, fileName):
 _paLineCol = re.compile('^ *([0-9]+) +([0-9]+) *(Error|Warning): *([^\n]+)\n')
 
 # fileName may be None
-def astrobeCompile (text, encodedText, encoding, fileName, isM3):
+def astrobeCompile (text, encodedText, encoding, fileName, astrobe):
 	assert type(text) is unicode
 	assert type(encodedText) is str
 	assert encoding != None
 
-	if isM3: # Cortex-M3
-		astrobeDir = "AstrobeM3 Professional Edition"
-	else: # LPC2000
+	if astrobe == 0: # LPC2000
 		astrobeDir = "Astrobe Professional Edition"
+	elif astrobe == 1: # Cortex-M3
+		astrobeDir = "AstrobeM3 Professional Edition"
+	elif astrobe == 2: # Cortex-M4
+		astrobeDir = "AstrobeM4 Professional Edition"
+	else:
+		assert False
 
 	r = _pMod.match(text)
 	if r != None:
@@ -529,10 +533,12 @@ def astrobeCompile (text, encodedText, encoding, fileName, isM3):
 				if mswindows:
 					exe = os.path.join( os.getenv('ProgramFiles'), astrobeDir, 'AstrobeCompile.exe' )
 					try:
-						if isM3:
+						if astrobe in (1, 2): # M3 or M4
 							e, o = cmd([exe, 'config.ini', fName])
-						else:
+						elif astrobe == 0: # LPC2000
 							e, o = cmd([exe, fName])
+						else:
+							assert False
 					except Exception, e:
 						msg = 'AstrobeCompile: ' + exMsg(e)
 						return (msg, None, None)
@@ -546,10 +552,12 @@ def astrobeCompile (text, encodedText, encoding, fileName, isM3):
 						else:
 							s = baseName
 						try:
-							if isM3:
+							if astrobe in (1, 2): # M3 or M4
 								e, o = cmdPollOnly(["wine", "C:\\Program Files\\%s\\AstrobeCompile.exe" % (astrobeDir,), 'config.ini', s])
-							else:
+							elif astrobe == 0: # LPC2000
 								e, o = cmdPollOnly(["wine", "C:\\Program Files\\%s\\AstrobeCompile.exe" % (astrobeDir,), s])
+							else:
+								assert False
 							tryMono = False
 						except Exception, e:
 							if e.errno == errno.ENOENT:
@@ -561,10 +569,12 @@ def astrobeCompile (text, encodedText, encoding, fileName, isM3):
 						tryMono = True
 					if tryMono:
 						try:
-							if isM3:
+							if astrobe in (1, 2): # M3 or M4
 								e, o = cmdPollOnly(["env", "MONO_IOMAP=all", "mono", os.path.join(os.getenv('HOME'), "install", astrobeDir, "AstrobeCompile.exe"), 'config.ini', fName])
-							else:
+							elif astrobe == 0: # LPC2000
 								e, o = cmdPollOnly(["env", "MONO_IOMAP=all", "mono", os.path.join(os.getenv('HOME'), "install", astrobeDir, "AstrobeCompile.exe"), fName])
+							else:
+								assert False
 							isMono = True
 						except Exception, e:
 							msg = 'mono AstrobeCompile: ' + exMsg(e)
@@ -605,9 +615,9 @@ def astrobeCompile (text, encodedText, encoding, fileName, isM3):
 		msg = u"'MODULE Ident;' expected"
 		return (msg, None, None)
 
-astrobeCompileLPC2000 = lambda text, encodedText, encoding, fileName: astrobeCompile(text, encodedText, encoding, fileName, False)
-
-astrobeCompileM3 = lambda text, encodedText, encoding, fileName: astrobeCompile(text, encodedText, encoding, fileName, True)
+astrobeCompileLPC2000 = lambda text, encodedText, encoding, fileName: astrobeCompile(text, encodedText, encoding, fileName, 0)
+astrobeCompileM3 = lambda text, encodedText, encoding, fileName: astrobeCompile(text, encodedText, encoding, fileName, 1)
+astrobeCompileM4 = lambda text, encodedText, encoding, fileName: astrobeCompile(text, encodedText, encoding, fileName, 2)
 
 def cCompile (text, encodedText, encoding, fileName):
 	assert type(text) is unicode
@@ -1298,6 +1308,17 @@ astrobeM3 = {
 	'lineSep': '\r\n', # не обязательно
 }
 
+astrobeM4 = {
+	'name': 'Astrobe-M4/Oberon-07',
+	'lang': 'oberon', # gtksourceview
+	'style': ('strict',), # gtksourceview
+	'extensions': ('mod',),
+	'compile': astrobeCompileM4,
+	'preferredFileEncoding': winEncoding(),
+	'empty': modObEmpty,
+	'lineSep': '\r\n', # не обязательно
+}
+
 gpcp = {
 	'name': 'gpcp/Component Pascal',
 	'lang': 'oberon', # gtksourceview
@@ -1414,7 +1435,7 @@ pyCoco = {
 #}
 
 profiles = (
-	oo2c, obc, astrobeLPC2000, astrobeM3, gpcp, zc, xcO2, xmO2, xcM2, xmM2, mocka, mikroPascal,
+	oo2c, obc, astrobeLPC2000, astrobeM3, astrobeM4, gpcp, zc, xcO2, xmO2, xcM2, xmM2, mocka, mikroPascal,
 	dcc32, fpc,
 	python, lua,
 	ocaml,
