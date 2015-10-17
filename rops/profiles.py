@@ -1,4 +1,4 @@
-# -*- coding: koi8-r -*-
+# -*- coding: utf-8 -*-
 # Alexander Shiryaev, 2010-2014
 
 import compiler, re, subprocess, os, sys, locale, tempfile, time, errno
@@ -43,7 +43,7 @@ def setnonblock (fd):
 	flags = flags | os.O_NONBLOCK
 	fcntl.fcntl(fd, fcntl.F_SETFL, flags)
 
-# не ждём завершения дочерних процессов (wine)
+# п╫п╣ п╤п╢я▒п╪ п╥п╟п╡п╣я─я┬п╣п╫п╦я▐ п╢п╬я┤п╣я─п╫п╦я┘ п©я─п╬я├п╣я│я│п╬п╡ (wine)
 # not mswindows
 def cmdPollOnly (args):
 	if Trace: print 'cmdPollOnly', args
@@ -319,7 +319,7 @@ def dcc32Compile (text, encodedText, encoding, fileName):
 						return (msg, None, None)
 				o = dcc32FilterStdout(o)
 
-				# указываем кодировку вывода такую же, как и кодировка содержимого файла, хотя скорее всего dcc32 использует только ascii-кодировку
+				# я┐п╨п╟п╥я▀п╡п╟п╣п╪ п╨п╬п╢п╦я─п╬п╡п╨я┐ п╡я▀п╡п╬п╢п╟ я┌п╟п╨я┐я▌ п╤п╣, п╨п╟п╨ п╦ п╨п╬п╢п╦я─п╬п╡п╨п╟ я│п╬п╢п╣я─п╤п╦п╪п╬пЁп╬ я└п╟п╧п╩п╟, я┘п╬я┌я▐ я│п╨п╬я─п╣п╣ п╡я│п╣пЁп╬ dcc32 п╦я│п©п╬п╩я▄п╥я┐п╣я┌ я┌п╬п╩я▄п╨п╬ ascii-п╨п╬п╢п╦я─п╬п╡п╨я┐
 				msg = e + o.decode( encoding )
 
 				eLines = e.count('\n')
@@ -699,7 +699,7 @@ def zcCompile (text, encodedText, encoding, fileName):
 	return (msg, errs, warns)
 
 # example:
-# 304	14/3	CRC8.mpas	Syntax error: Expected "end" but "п" found
+# 304	14/3	CRC8.mpas	Syntax error: Expected "end" but "п©" found
 _pmkpLineCol = re.compile("^(?:[0-9]+)\t([0-9]+)/([0-9]+)\t([^\t]+)\t([^\n]+)\n")
 
 def mikroPascalCompile (text, encodedText, encoding, fileName):
@@ -925,7 +925,7 @@ def pyImport (encodedText):
 			encodedText = encodedText[3:]
 			encoding = 'utf-8'
 		else:
-			# вообще должна быть ascii
+			# п╡п╬п╬п╠я┴п╣ п╢п╬п╩п╤п╫п╟ п╠я▀я┌я▄ ascii
 			encoding = locale.getpreferredencoding()
 
 	if Trace: print 'pyImportEncoding:', encoding
@@ -1273,7 +1273,7 @@ dcc32 = {
 	'compile': dcc32Compile,
 	'preferredFileEncoding': winEncoding(),
 	'empty': delphiEmpty,
-	'lineSep': '\r\n', # не обязательно
+	'lineSep': '\r\n', # п╫п╣ п╬п╠я▐п╥п╟я┌п╣п╩я▄п╫п╬
 }
 
 fpc = {
@@ -1283,7 +1283,7 @@ fpc = {
 	'compile': fpcCompile,
 #	'preferredFileEncoding': winEncoding(),
 	'empty': delphiEmpty,
-#	'lineSep': '\r\n', # не обязательно
+#	'lineSep': '\r\n', # п╫п╣ п╬п╠я▐п╥п╟я┌п╣п╩я▄п╫п╬
 }
 
 astrobeLPC2000 = {
@@ -1294,7 +1294,7 @@ astrobeLPC2000 = {
 	'compile': astrobeCompileLPC2000,
 	'preferredFileEncoding': winEncoding(),
 	'empty': modObEmpty,
-	'lineSep': '\r\n', # не обязательно
+	'lineSep': '\r\n', # п╫п╣ п╬п╠я▐п╥п╟я┌п╣п╩я▄п╫п╬
 }
 
 astrobeM3 = {
@@ -1305,7 +1305,7 @@ astrobeM3 = {
 	'compile': astrobeCompileM3,
 	'preferredFileEncoding': winEncoding(),
 	'empty': modObEmpty,
-	'lineSep': '\r\n', # не обязательно
+	'lineSep': '\r\n', # п╫п╣ п╬п╠я▐п╥п╟я┌п╣п╩я▄п╫п╬
 }
 
 astrobeM4 = {
@@ -1316,7 +1316,7 @@ astrobeM4 = {
 	'compile': astrobeCompileM4,
 	'preferredFileEncoding': winEncoding(),
 	'empty': modObEmpty,
-	'lineSep': '\r\n', # не обязательно
+	'lineSep': '\r\n', # п╫п╣ п╬п╠я▐п╥п╟я┌п╣п╩я▄п╫п╬
 }
 
 gpcp = {
@@ -1326,7 +1326,7 @@ gpcp = {
 	'extensions': ('cp',),
 	'compile': gpcpCompile,
 	'empty': modObEmpty,
-	'lineSep': '\r\n', # не обязательно
+	'lineSep': '\r\n', # п╫п╣ п╬п╠я▐п╥п╟я┌п╣п╩я▄п╫п╬
 }
 
 mocka = {

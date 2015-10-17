@@ -1,10 +1,10 @@
 #! /usr/bin/env python2.7
-# -*- coding: koi8-r -*-
+# -*- coding: utf-8 -*-
 # Alexander Shiryaev, 2010-2012
 #
 # IMPLEMENTATION NOTES:
-#	имена файлов храним в кодировке системы (locale.getpreferredlocale())
-#	текст gtk.TextView храним в unicode
+#	п╦п╪п╣п╫п╟ я└п╟п╧п╩п╬п╡ я┘я─п╟п╫п╦п╪ п╡ п╨п╬п╢п╦я─п╬п╡п╨п╣ я│п╦я│я┌п╣п╪я▀ (locale.getpreferredlocale())
+#	я┌п╣п╨я│я┌ gtk.TextView я┘я─п╟п╫п╦п╪ п╡ unicode
 
 import pygtk
 pygtk.require('2.0')
@@ -218,8 +218,8 @@ def importText (prof, encodedText, parent):
 		assert not prof.has_key('preferredFileEncoding')
 
 		text = prof['import'](encodedText)
-		# знать кодировку при явном импорте в дальнейшем не нужно,
-		# потому что в этом случае экспорт тоже должен быть явным, а для него знать кодировку при импорте не нужно
+		# п╥п╫п╟я┌я▄ п╨п╬п╢п╦я─п╬п╡п╨я┐ п©я─п╦ я▐п╡п╫п╬п╪ п╦п╪п©п╬я─я┌п╣ п╡ п╢п╟п╩я▄п╫п╣п╧я┬п╣п╪ п╫п╣ п╫я┐п╤п╫п╬,
+		# п©п╬я┌п╬п╪я┐ я┤я┌п╬ п╡ я█я┌п╬п╪ я│п╩я┐я┤п╟п╣ я█п╨я│п©п╬я─я┌ я┌п╬п╤п╣ п╢п╬п╩п╤п╣п╫ п╠я▀я┌я▄ я▐п╡п╫я▀п╪, п╟ п╢п╩я▐ п╫п╣пЁп╬ п╥п╫п╟я┌я▄ п╨п╬п╢п╦я─п╬п╡п╨я┐ п©я─п╦ п╦п╪п©п╬я─я┌п╣ п╫п╣ п╫я┐п╤п╫п╬
 		encoding = None
 		autoDetected = False
 	else:
@@ -515,7 +515,7 @@ def setCursorPos (textView, line, col):
 			it.forward_chars(col)
 		buffer.place_cursor(it)
 
-		# textView.scroll_to_iter(it, ...) не пользуемся, потому что срабатывает не всегда (см. документацию gtk.TextView)
+		# textView.scroll_to_iter(it, ...) п╫п╣ п©п╬п╩я▄п╥я┐п╣п╪я│я▐, п©п╬я┌п╬п╪я┐ я┤я┌п╬ я│я─п╟п╠п╟я┌я▀п╡п╟п╣я┌ п╫п╣ п╡я│п╣пЁп╢п╟ (я│п╪. п╢п╬п╨я┐п╪п╣п╫я┌п╟я├п╦я▌ gtk.TextView)
 		textView.scroll_to_mark(buffer.get_insert(), 0, use_align=True, xalign=1)
 
 def restoreCurPos (fileName, textView):
@@ -548,7 +548,7 @@ saveSettings = lambda settings: store.save(_settingsStoreName, settings)
 
 def translateBuilder (builder):
 	for obj in builder.get_objects():
-		# делаем так, потому что при попытке получения свойств по крейней мере у SeparatorMenuItem он исчезает (где-то ошибка в gtk или в pygtk)
+		# п╢п╣п╩п╟п╣п╪ я┌п╟п╨, п©п╬я┌п╬п╪я┐ я┤я┌п╬ п©я─п╦ п©п╬п©я▀я┌п╨п╣ п©п╬п╩я┐я┤п╣п╫п╦я▐ я│п╡п╬п╧я│я┌п╡ п©п╬ п╨я─п╣п╧п╫п╣п╧ п╪п╣я─п╣ я┐ SeparatorMenuItem п╬п╫ п╦я│я┤п╣п╥п╟п╣я┌ (пЁп╢п╣-я┌п╬ п╬я┬п╦п╠п╨п╟ п╡ gtk п╦п╩п╦ п╡ pygtk)
 		if type(obj) in (gtk.Window, gtk.MenuItem, gtk.Label, gtk.Button, gtk.CheckButton):
 			if type(obj) is gtk.Window:
 				label = obj.get_title().decode('utf-8')
@@ -581,8 +581,8 @@ def detectLineSep (text):
 	else:
 		return '\n'
 
-# разделить такст на строки (в тексте могут использоваться разные разделители строк)
-# похоже совпадает с алгоритмом разделения на строки gtk.TextView
+# я─п╟п╥п╢п╣п╩п╦я┌я▄ я┌п╟п╨я│я┌ п╫п╟ я│я┌я─п╬п╨п╦ (п╡ я┌п╣п╨я│я┌п╣ п╪п╬пЁя┐я┌ п╦я│п©п╬п╩я▄п╥п╬п╡п╟я┌я▄я│я▐ я─п╟п╥п╫я▀п╣ я─п╟п╥п╢п╣п╩п╦я┌п╣п╩п╦ я│я┌я─п╬п╨)
+# п©п╬я┘п╬п╤п╣ я│п╬п╡п©п╟п╢п╟п╣я┌ я│ п╟п╩пЁп╬я─п╦я┌п╪п╬п╪ я─п╟п╥п╢п╣п╩п╣п╫п╦я▐ п╫п╟ я│я┌я─п╬п╨п╦ gtk.TextView
 def splitToLines (text):
 	lines = []
 	for l in text.split('\r\n'):
@@ -712,7 +712,7 @@ class Application:
 
 				buffer = self.srcTextView.get_buffer()
 				buffer.place_cursor(matchStart)
-				# textView.scroll_to_iter(it, ...) не пользуемся, потому что срабатывает не всегда (см. документацию gtk.TextView)
+				# textView.scroll_to_iter(it, ...) п╫п╣ п©п╬п╩я▄п╥я┐п╣п╪я│я▐, п©п╬я┌п╬п╪я┐ я┤я┌п╬ я│я─п╟п╠п╟я┌я▀п╡п╟п╣я┌ п╫п╣ п╡я│п╣пЁп╢п╟ (я│п╪. п╢п╬п╨я┐п╪п╣п╫я┌п╟я├п╦я▌ gtk.TextView)
 				self.srcTextView.scroll_to_mark(buffer.get_insert(), 0, use_align=True)
 
 				buffer.select_range(matchStart, matchEnd)
@@ -804,7 +804,7 @@ class Application:
 	def on_entry1_key_press_event (self, widget, event):
 		# if Trace: print 'on find entry key press:', event
 		if event.keyval == gtk.keysyms.Tab:
-			# вставляем символ TAB вместо смены фокуса
+			# п╡я│я┌п╟п╡п╩я▐п╣п╪ я│п╦п╪п╡п╬п╩ TAB п╡п╪п╣я│я┌п╬ я│п╪п╣п╫я▀ я└п╬п╨я┐я│п╟
 			pos = widget.get_position()
 			widget.insert_text( '\t', position=pos )
 			widget.set_position(pos + 1)
@@ -813,7 +813,7 @@ class Application:
 	def on_entry2_key_press_event (self, widget, event):
 		# if Trace: print 'on replace entry key press:', event
 		if event.keyval == gtk.keysyms.Tab:
-			# вставляем символ TAB вместо смены фокуса
+			# п╡я│я┌п╟п╡п╩я▐п╣п╪ я│п╦п╪п╡п╬п╩ TAB п╡п╪п╣я│я┌п╬ я│п╪п╣п╫я▀ я└п╬п╨я┐я│п╟
 			pos = widget.get_position()
 			widget.insert_text( '\t', position=pos )
 			widget.set_position(pos + 1)
@@ -1263,11 +1263,11 @@ def main ():
 		setTrLang( x.split('_')[0] )
 
 	if gtk.gdk.get_display() != None:
-		# 4 варианта начала работы:
-		# 1) запустили без параметров для создания нового файла
-		# 2) запустили без параметров для открытия нового файла
-		# 3) запустили для открытия заданного файла
-		# 4) запустили для создания заданного файла
+		# 4 п╡п╟я─п╦п╟п╫я┌п╟ п╫п╟я┤п╟п╩п╟ я─п╟п╠п╬я┌я▀:
+		# 1) п╥п╟п©я┐я│я┌п╦п╩п╦ п╠п╣п╥ п©п╟я─п╟п╪п╣я┌я─п╬п╡ п╢п╩я▐ я│п╬п╥п╢п╟п╫п╦я▐ п╫п╬п╡п╬пЁп╬ я└п╟п╧п╩п╟
+		# 2) п╥п╟п©я┐я│я┌п╦п╩п╦ п╠п╣п╥ п©п╟я─п╟п╪п╣я┌я─п╬п╡ п╢п╩я▐ п╬я┌п╨я─я▀я┌п╦я▐ п╫п╬п╡п╬пЁп╬ я└п╟п╧п╩п╟
+		# 3) п╥п╟п©я┐я│я┌п╦п╩п╦ п╢п╩я▐ п╬я┌п╨я─я▀я┌п╦я▐ п╥п╟п╢п╟п╫п╫п╬пЁп╬ я└п╟п╧п╩п╟
+		# 4) п╥п╟п©я┐я│я┌п╦п╩п╦ п╢п╩я▐ я│п╬п╥п╢п╟п╫п╦я▐ п╥п╟п╢п╟п╫п╫п╬пЁп╬ я└п╟п╧п╩п╟
 		if len(sys.argv) == 2:
 			fileName = sys.argv[1]
 			prof = getProf(None, fileName)
