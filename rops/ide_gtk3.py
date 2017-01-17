@@ -1222,13 +1222,13 @@ class Application:
 #		color = self.mainWindow.get_visual().alloc_color(
 #			65535, 49152, 49152
 #		)
-		color = 'yellow'
+		color = 'pink'
 		self.msgErrTag = self.msgTextView.get_buffer().create_tag(background=color)
 		self.msgErrTag.connect("event", self.msg_link_tag_event)
 #		color = self.mainWindow.get_colormap().alloc_color(
 #			65535, 65535, 32768
 #		)
-		color = 'red'
+		color = 'yellow'
 		self.msgWarnTag = self.msgTextView.get_buffer().create_tag(background=color)
 		self.msgWarnTag.connect("event", self.msg_link_tag_event)
 
