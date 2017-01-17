@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Alexander Shiryaev, 2010-2014
+# Alexander Shiryaev, 2010-2017
 
 import compiler, re, subprocess, os, sys, locale, tempfile, time, errno
 import util, winenc
@@ -116,6 +116,76 @@ _pcLine = re.compile('^(?:[^:]+):([1-9][0-9]*): ([^\n]+)\n')
 
 _pPas = re.compile('^\s*(?:program|unit|library)\s+([a-zA-Z][a-zA-Z0-9]*)\s*;', re.I)
 
+# "    pos    20  err 41  END missing"
+# "  pos 14167  warning 307  no ELSE symbol after CASE statement sequence may lead to trap  24124 chars."
+_pVocPos = re.compile("^\s*pos\s+([0-9]+)\s+(err|warning)\s+([0-9]+)\s+([^\n]+)\n")
+
+def posToLineCol0 (src, pos):
+	line = 0
+	for l in map(len, src.split('\n')): # XXX: split
+		if pos > l + 1:
+			pos = pos - l - 1
+			line = line + 1
+		else:
+			return (line, pos)
+
+# fileName may be None
+def vocCompile (flag, text, encodedText, encoding, fileName):
+	assert type(text) is unicode
+	assert type(encodedText) is str
+	assert encoding != None
+
+	xCmd = 'voc'
+
+	fd, name = tempfile.mkstemp()
+	try:
+		try:
+			try:
+				os.write(fd, encodedText.replace('\t', ' '))
+			except Exception, e:
+				msg = tr('#File write error') + ': ' + exMsg(e)
+				return (msg, None, None)
+		finally:
+			try:
+				os.close(fd)
+			except:
+				pass
+		try:
+			e, o = cmd([xCmd, flag, name])
+		except Exception, e:
+			msg = xCmd + ': ' + exMsg(e)
+			return (msg, None, None)
+	finally:
+		try:
+			os.remove(name)
+		except:
+			pass
+
+	msg = e + o.decode( encoding )
+
+	eLines = e.count('\n')
+	errs = []
+	warns = []
+	i = eLines
+	for l in o.split('\n'):
+		r = _pVocPos.match(l + '\n')
+		if r != None:
+			line, col = posToLineCol0(text, int(r.group(1)) + 1)
+			error = r.group(4)
+			pos = (line, col)
+			link = (i, pos)
+			if r.group(2) == 'err':
+				errs.append(link)
+			elif r.group(2) == 'warning':
+				warns.append(link)
+			else:
+				assert False
+		i = i + 1
+	return (msg, errs, warns)
+
+vocO2Compile = lambda text, encodedText, encoding, fileName: vocCompile('-O2', text, encodedText, encoding, fileName)
+vocOCCompile = lambda text, encodedText, encoding, fileName: vocCompile('-OC', text, encodedText, encoding, fileName)
+
 # fileName may be None
 def oo2cCompile (text, encodedText, encoding, fileName):
 	assert type(text) is unicode
@@ -184,14 +254,6 @@ def oo2cCompile (text, encodedText, encoding, fileName):
 		msg = u"'MODULE Ident;' expected"
 		return (msg, None, None)
 
-def posToLineCol (src, pos):
-	line = 0
-	for l in map(len, src.split('\n')): # XXX: split
-		if pos > l + 1:
-			pos = pos - l - 1
-			line = line + 1
-		else:
-			return (line, pos)
 
 _dev0Pos = re.compile("^  pos =  ([0-9]+), error = '([^']+)'$")
 
@@ -235,7 +297,7 @@ def dev0Compile (text, encodedText, encoding, fileName):
 	for l in o.split('\n'):
 		r = _dev0Pos.match(l)
 		if r != None:
-			line, col = posToLineCol(text, int(r.group(1)))
+			line, col = posToLineCol0(text, int(r.group(1)))
 			error = r.group(2)
 			pos = (line, col)
 			link = (i, pos)
@@ -1174,6 +1236,24 @@ def delphiEmpty (name):
 		col = 1
 	return (text, line, col)
 
+vocO2 = {
+	'name': 'voc/Oberon-2', # display
+	'lang': 'oberon', # gtksourceview
+	'style': ('strict',), # gtksourceview
+	'extensions': ('Mod', 'mod'),
+	'compile': vocO2Compile,
+	'empty': modObEmpty,
+}
+
+vocOC = {
+	'name': 'voc/Component Pascal', # display
+	'lang': 'oberon', # gtksourceview
+	'style': ('strict',), # gtksourceview
+	'extensions': ('Mod', 'mod'),
+	'compile': vocOCCompile,
+	'empty': modObEmpty,
+}
+
 oo2c = {
 	'name': 'oo2c/Oberon-2', # display
 	'lang': 'oberon', # gtksourceview
@@ -1435,7 +1515,7 @@ pyCoco = {
 #}
 
 profiles = (
-	oo2c, obc, astrobeLPC2000, astrobeM3, astrobeM4, gpcp, zc, xcO2, xmO2, xcM2, xmM2, mocka, mikroPascal,
+	vocO2, vocOC, oo2c, obc, astrobeLPC2000, astrobeM3, astrobeM4, gpcp, zc, xcO2, xmO2, xcM2, xmM2, mocka, mikroPascal,
 	dcc32, fpc,
 	python, lua,
 	ocaml,
