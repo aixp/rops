@@ -1170,8 +1170,8 @@ class Application:
 		self.settings['modified'] = False
 
 		builder = gtk.Builder()
-		# gladeFile = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'ide.glade')
-		gladeFile = os.path.join( util.dataDir(), 'ide.glade' )
+		# gladeFile = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'ide-gtk2.glade')
+		gladeFile = os.path.join( util.dataDir(), 'ide-gtk2.glade' )
 		if Trace: print 'gladeFile:', gladeFile
 		builder.add_from_file( fileNameToGtk(gladeFile) )
 		builder.connect_signals(self)

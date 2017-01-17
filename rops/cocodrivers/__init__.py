@@ -1,4 +1,4 @@
-import Umbriel
+import Oberon0, Umbriel
 from util import toCompileResult
 
-all = [ "Umbriel", "toCompileResult" ]
+all = [ "Oberon0", "Umbriel", "toCompileResult" ]

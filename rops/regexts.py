@@ -31,7 +31,7 @@ def getPythonDir ():
 	return pyDir
 
 def getCmd ():
-	return '"' + os.path.join(getPythonDir(), "python.exe") + '" "' + os.path.join(os.path.dirname(os.path.realpath(__file__)), 'ide.py') + '" "%1"'
+	return '"' + os.path.join(getPythonDir(), "python.exe") + '" "' + os.path.join(os.path.dirname(os.path.realpath(__file__)), 'ide-gtk2.py') + '" "%1"'
 
 def getValues (key):
 	d = {}

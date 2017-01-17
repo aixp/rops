@@ -1,4 +1,4 @@
-# -*- coding: koi8-r -*-
+# -*- coding: utf-8 -*-
 # Alexander Shiryaev, 2010
 
 import os

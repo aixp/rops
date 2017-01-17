@@ -8,4 +8,4 @@ with syntax checking
 
 ROPS is transliterated abbreviation
 
-Alexander Shiryaev, 2010-2013
+Alexander Shiryaev, 2010-2017
