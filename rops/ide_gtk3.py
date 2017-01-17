@@ -389,7 +389,7 @@ def SelectItem (parent, title, name, items):
 		Gtk.STOCK_CANCEL, Gtk.ResponseType.CANCEL
 	)
 	if parent == None:
-		dialog.set_position(Gtk.WIN_POS_CENTER)
+		dialog.set_position(Gtk.WindowPosition.CENTER)
 
 	tv = Gtk.TreeView()
 	tv.show()
