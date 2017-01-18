@@ -1190,12 +1190,9 @@ class Application:
 
 		self.mainWindow = builder.get_object('window1')
 
-		# http://askubuntu.com/questions/153549/how-to-detect-a-computers-physical-screen-size-in-gtk
 		s = self.mainWindow.get_screen()
-		m = s.get_monitor_at_window(s.get_active_window())
-		monitor = s.get_monitor_geometry(m)
-		width = monitor.width
-		height = monitor.height
+		width = s.get_width()
+		height = s.get_height()
 
 		self.mainWindow.set_property("default_width", width / 2)
 		self.mainWindow.set_property("default_height", 4 * height / 5)
