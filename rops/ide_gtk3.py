@@ -412,6 +412,8 @@ def SelectItem (parent, title, name, items):
 
 	tv.connect("row_activated", on_tv_activate)
 
+	w, h = dialog.get_size() # required to set dialog position correctly
+
 	resp = dialog.run()
 	if resp == Gtk.ResponseType.OK:
 		x = tv.get_selection().get_selected()
