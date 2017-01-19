@@ -1,6 +1,6 @@
 #! /usr/bin/env python2.7
 # -*- coding: utf-8 -*-
-# Alexander Shiryaev, 2010-2012
+# Alexander Shiryaev, 2010-2017
 #
 # IMPLEMENTATION NOTES:
 #	имена файлов храним в кодировке системы (locale.getpreferredlocale())
@@ -1163,6 +1163,20 @@ class Application:
 
 		return False
 
+	def setMainWindowSize (self):
+		w = gtk.gdk.screen_width()
+		h = gtk.gdk.screen_height()
+
+		height = 4 * h / 5
+		width = height * h / w
+		x = int(round(w / width))
+		if x <= 0:
+			x = 1
+		width = w / x
+
+		self.mainWindow.set_property("default_width", width)
+		self.mainWindow.set_property("default_height", height)
+
 	def __init__ (self, par):
 		self.msgLinks = None
 
@@ -1177,8 +1191,7 @@ class Application:
 		builder.connect_signals(self)
 
 		self.mainWindow = builder.get_object('window1')
-		self.mainWindow.set_property("default_width", gtk.gdk.screen_width() / 2)
-		self.mainWindow.set_property("default_height", 4 * gtk.gdk.screen_height() / 5)
+		self.setMainWindowSize()
 
 		self.miSharpComment = builder.get_object('menuitem5')
 		self.miSharpUnComment = builder.get_object('menuitem6')

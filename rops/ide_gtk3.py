@@ -529,7 +529,7 @@ def setCursorPos (textView, line, col):
 		buffer.place_cursor(it)
 
 		# textView.scroll_to_iter(it, ...) не пользуемся, потому что срабатывает не всегда (см. документацию Gtk.TextView)
-		textView.scroll_to_mark(buffer.get_insert(), 0.0, True, 0.5, 0.5)
+		textView.scroll_to_mark(buffer.get_insert(), 0.0, True, 0.0, 0.5)
 
 def restoreCurPos (fileName, textView):
 	line, col = curpos.loadCurPos(fileName)
@@ -1177,6 +1177,24 @@ class Application:
 
 		return False
 
+	def setMainWindowSize (self):
+		s = self.mainWindow.get_screen()
+		d = s.get_display()
+		m = d.get_primary_monitor()
+		g = m.get_geometry()
+		w = g.width
+		h = g.height
+
+		height = 4 * h / 5
+		width = height * h / w
+		x = int(round(w / width))
+		if x <= 0:
+			x = 1
+		width = w / x
+
+		self.mainWindow.set_property("default_width", width)
+		self.mainWindow.set_property("default_height", height)
+
 	def __init__ (self, par):
 		self.msgLinks = None
 
@@ -1192,12 +1210,7 @@ class Application:
 
 		self.mainWindow = builder.get_object('window1')
 
-		s = self.mainWindow.get_screen()
-		width = s.get_width()
-		height = s.get_height()
-
-		self.mainWindow.set_property("default_width", width / 2)
-		self.mainWindow.set_property("default_height", 4 * height / 5)
+		self.setMainWindowSize()
 
 		self.miSharpComment = builder.get_object('menuitem5')
 		self.miSharpUnComment = builder.get_object('menuitem6')
