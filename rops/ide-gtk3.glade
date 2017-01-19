@@ -342,6 +342,7 @@
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
                 <property name="has_focus">True</property>
+                <signal name="activate" handler="on_entry1_activate" swapped="no"/>
                 <signal name="key-press-event" handler="on_entry1_key_press_event" swapped="no"/>
               </object>
               <packing>
@@ -353,6 +354,7 @@
               <object class="GtkEntry" id="entry2">
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
+                <signal name="key-press-event" handler="on_entry2_key_press_event" swapped="no"/>
               </object>
               <packing>
                 <property name="left_attach">1</property>
@@ -443,6 +445,7 @@
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
                 <property name="receives_default">True</property>
+                <signal name="clicked" handler="on_button1_clicked" swapped="no"/>
               </object>
               <packing>
                 <property name="expand">False</property>
@@ -456,6 +459,7 @@
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
                 <property name="receives_default">True</property>
+                <signal name="clicked" handler="on_button2_clicked" swapped="no"/>
               </object>
               <packing>
                 <property name="expand">False</property>
@@ -469,6 +473,7 @@
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
                 <property name="receives_default">True</property>
+                <signal name="clicked" handler="on_button3_clicked" swapped="no"/>
               </object>
               <packing>
                 <property name="expand">False</property>
@@ -482,6 +487,7 @@
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
                 <property name="receives_default">True</property>
+                <signal name="clicked" handler="on_button4_clicked" swapped="no"/>
               </object>
               <packing>
                 <property name="expand">False</property>
@@ -495,6 +501,7 @@
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
                 <property name="receives_default">True</property>
+                <signal name="clicked" handler="on_button5_clicked" swapped="no"/>
               </object>
               <packing>
                 <property name="expand">False</property>
