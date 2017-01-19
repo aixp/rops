@@ -1283,7 +1283,7 @@ def main ():
 	if x != None:
 		setTrLang( x.split('_')[0] )
 
-	if Gdk.get_display() != None:
+	if Gdk.Display.get_default() != None:
 		# 4 варианта начала работы:
 		# 1) запустили без параметров для создания нового файла
 		# 2) запустили без параметров для открытия нового файла
