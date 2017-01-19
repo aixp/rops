@@ -147,6 +147,7 @@
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
                         <property name="label" translatable="yes">#Sharp Comment</property>
+                        <signal name="activate" handler="on_menuitem5_activate" swapped="no"/>
                       </object>
                     </child>
                     <child>
@@ -154,6 +155,7 @@
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
                         <property name="label" translatable="yes">#Sharp Uncomment</property>
+                        <signal name="activate" handler="on_menuitem6_activate" swapped="no"/>
                       </object>
                     </child>
                     <child>
@@ -161,6 +163,7 @@
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
                         <property name="label" translatable="yes">#Shift Left</property>
+                        <signal name="activate" handler="on_menuitem7_activate" swapped="no"/>
                         <accelerator key="F11" signal="activate"/>
                       </object>
                     </child>
@@ -169,6 +172,7 @@
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
                         <property name="label" translatable="yes">#Shift Right</property>
+                        <signal name="activate" handler="on_menuitem8_activate" swapped="no"/>
                         <accelerator key="F12" signal="activate"/>
                       </object>
                     </child>

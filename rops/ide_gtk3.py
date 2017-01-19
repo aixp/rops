@@ -529,7 +529,7 @@ def setCursorPos (textView, line, col):
 		buffer.place_cursor(it)
 
 		# textView.scroll_to_iter(it, ...) не пользуемся, потому что срабатывает не всегда (см. документацию Gtk.TextView)
-		textView.scroll_to_mark(buffer.get_insert(), 0.0, True, 0.0, 0.5)
+		textView.scroll_to_mark(buffer.get_insert(), 0.0, True, 1.0, 0.5)
 
 def restoreCurPos (fileName, textView):
 	line, col = curpos.loadCurPos(fileName)
