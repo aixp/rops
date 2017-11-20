@@ -14,13 +14,13 @@ Requirements
 Ubuntu
 ------
 
-GTK2-version:
+GTK+2 version:
 
 ```shell
 sudo apt-get install python-gtksourceview2 python-chardet
 ```
 
-GTK3-version:
+GTK+3 version:
 
 ```shell
 sudo apt-get install gir1.2-gtksource-3.0 python-gi-cairo python-chardet
@@ -29,7 +29,7 @@ sudo apt-get install gir1.2-gtksource-3.0 python-gi-cairo python-chardet
 Install
 =======
 
-GTK2-version:
+GTK+2 version:
 
 ```shell
 mkdir -p ~/bin
@@ -50,7 +50,7 @@ mkdir -p ~/.local/share/gtksourceview-2.0/styles
 cp strict.xml ~/.local/share/gtksourceview-2.0/styles/
 ```
 
-GTK3-version:
+GTK+3 version:
 
 ```shell
 mkdir -p ~/bin
