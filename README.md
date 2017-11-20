@@ -35,7 +35,7 @@ GTK2-version:
 mkdir -p ~/bin
 cat > ~/bin/rops <<DATA
 #!/bin/sh
-exec python2.7 `readlink -f rops/ide_gtk2.py` "${@}"
+exec python2.7 `readlink -f rops/ide_gtk2.py` "\${@}"
 DATA
 chmod +x ~/bin/rops
 ```
@@ -56,7 +56,7 @@ GTK3-version:
 mkdir -p ~/bin
 cat > ~/bin/rops <<DATA
 #!/bin/sh
-exec python2.7 `readlink -f rops/ide_gtk3.py` "${@}"
+exec python2.7 `readlink -f rops/ide_gtk3.py` "\${@}"
 DATA
 chmod +x ~/bin/rops
 ```
