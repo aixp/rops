@@ -8,46 +8,67 @@ with syntax checking
 
 ROPS is transliterated abbreviation
 
-Requirements:
+Requirements
+============
 
-	Ubuntu:
+Ubuntu
+------
 
-		GTK2-version:
-			python-gtksourceview2
+GTK2-version:
 
-		GTK3-version:
-			gir1.2-gtksource-3.0
-			python-gi-cairo
-			python-chardet
+```shell
+sudo apt-get install python-gtksourceview2
+```
 
-Install:
+GTK3-version:
 
-	GTK2-version:
-		cat > ~/bin/rops <<DATA
-		#!/bin/sh
-		exec python2.7 `readlink -f rops/ide_gtk2.py` "${@}"
-		DATA
-		chmod +x ~/bin/rops
+```shell
+sudo apt-get install gir1.2-gtksource-3.0 python-gi-cairo python-chardet
+```
 
-		mkdir -p ~/.local/share/gtksourceview-2.0/language-specs
-		cp oberon.lang zonnon.lang ~/.local/share/gtksourceview-2.0/language-specs/
+Install
+=======
 
-		mkdir -p ~/.local/share/gtksourceview-2.0/styles
-		cp strict.xml ~/.local/share/gtksourceview-2.0/styles/
+GTK2-version:
 
-	GTK3-version:
-		cat > ~/bin/rops <<DATA
-		#!/bin/sh
-		exec python2.7 `readlink -f rops/ide_gtk3.py` "${@}"
-		DATA
-		chmod +x ~/bin/rops
+```shell
+mkdir -p ~/bin
+cat > ~/bin/rops <<DATA
+#!/bin/sh
+exec python2.7 `readlink -f rops/ide_gtk2.py` "${@}"
+DATA
+chmod +x ~/bin/rops
+```
 
-		ln -s `readlink -f rops/ide_gtk3.py` ~/bin/rops
+```shell
+mkdir -p ~/.local/share/gtksourceview-2.0/language-specs
+cp oberon.lang zonnon.lang ~/.local/share/gtksourceview-2.0/language-specs/
+```
 
-		mkdir -p ~/.local/share/gtksourceview-3.0/language-specs
-		cp oberon.lang zonnon.lang ~/.local/share/gtksourceview-3.0/language-specs/
+```shell
+mkdir -p ~/.local/share/gtksourceview-2.0/styles
+cp strict.xml ~/.local/share/gtksourceview-2.0/styles/
+```
 
-		mkdir -p ~/.local/share/gtksourceview-3.0/styles
-		cp strict.xml ~/.local/share/gtksourceview-3.0/styles/
+GTK3-version:
+
+```shell
+mkdir -p ~/bin
+cat > ~/bin/rops <<DATA
+#!/bin/sh
+exec python2.7 `readlink -f rops/ide_gtk3.py` "${@}"
+DATA
+chmod +x ~/bin/rops
+```
+
+```shell
+mkdir -p ~/.local/share/gtksourceview-3.0/language-specs
+cp oberon.lang zonnon.lang ~/.local/share/gtksourceview-3.0/language-specs/
+```
+
+```shell
+mkdir -p ~/.local/share/gtksourceview-3.0/styles
+cp strict.xml ~/.local/share/gtksourceview-3.0/styles/
+```
 
 Alexander Shiryaev, 2010-2017
