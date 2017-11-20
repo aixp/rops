@@ -17,7 +17,7 @@ Ubuntu
 GTK2-version:
 
 ```shell
-sudo apt-get install python-gtksourceview2
+sudo apt-get install python-gtksourceview2 python-chardet
 ```
 
 GTK3-version:
