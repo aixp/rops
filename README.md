@@ -26,6 +26,21 @@ GTK+3 version:
 sudo apt-get install gir1.2-gtksource-3.0 python-gi-cairo python-chardet
 ```
 
+OpenBSD
+-------
+
+GTK+2 version:
+
+```shell
+pkg_add py-gtk2 py-chardet
+```
+
+GTK+3 version:
+
+```shell
+pkg_add py-gobject3 gtksourceview3 py-chardet
+```
+
 Install
 =======
 
