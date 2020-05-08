@@ -141,7 +141,7 @@ def vocCompile (flag, text, encodedText, encoding, fileName):
 	try:
 		try:
 			try:
-				os.write(fd, encodedText.replace('\t', ' '))
+				os.write(fd, encodedText)
 			except Exception, e:
 				msg = tr('#File write error') + ': ' + exMsg(e)
 				return (msg, None, None)
@@ -151,7 +151,10 @@ def vocCompile (flag, text, encodedText, encoding, fileName):
 			except:
 				pass
 		try:
-			e, o = cmd([xCmd, flag, name])
+			if mswindows:
+				e, o = cmd([xCmd, "-f", flag, name])
+			else:
+				e, o = cmd(["env", "LANG=C", xCmd, "-f", flag, name])
 		except Exception, e:
 			msg = xCmd + ': ' + exMsg(e)
 			return (msg, None, None)
