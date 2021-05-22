@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Alexander Shiryaev, 2010-2017
+# Alexander Shiryaev, 2010-2017, 2021
 
 import compiler, re, subprocess, os, sys, locale, tempfile, time, errno
 import util, winenc
@@ -726,6 +726,44 @@ def cCompile (text, encodedText, encoding, fileName):
 				m = r.group(2)
 				add(m, link)
 		i = i + 1
+	return (msg, errs, warns)
+
+_pGenieLineCol = re.compile('^(?:[^:]+):([1-9][0-9]*)\.([1-9][0-9]*)-([1-9][0-9]*)\.([1-9][0-9]*): ([^\n]+)\n')
+
+def genieCompile (text, encodedText, encoding, fileName):
+	assert type(text) is unicode
+	assert type(encodedText) is str
+	assert encoding != None
+	assert fileName != None # because compileSavedOnly
+
+	try:
+		e, o = cmd(["make"])
+	except Exception, e:
+		msg = 'make: ' + exMsg(e)
+		return (msg, None, None)
+
+	msg = (e + o).decode( encoding )
+
+	def add (m, link):
+		if m.startswith('warning:'):
+			warns.append(link)
+		else:
+			errs.append(link)
+
+	i = 0
+	errs = []
+	warns = []
+	for l in e.split('\n'):
+		r = _pGenieLineCol.match(l + '\n')
+		if r != None:
+			line = int(r.group(1)) - 1
+			col = int(r.group(2)) - 1
+			pos = (line, col)
+			link = (i, pos)
+			m = r.group(5)
+			add(m, link)
+		i = i + 1
+
 	return (msg, errs, warns)
 
 _zcLineCol = re.compile("^([0-9]+): ([^\(]+)\(([0-9]+)\,([0-9]+)\): ([^\n]+)\n")
@@ -1459,6 +1497,15 @@ ocaml = {
 	'compileSavedOnly': True, # may be optimized?
 }
 
+genie = {
+	'name': 'make/genie',
+	'lang': 'genie', # gtksourceview
+	'style': ('kate',), # gtksourceview
+	'extensions': ('gs',),
+	'compile': genieCompile,
+	'compileSavedOnly': True, # because compile with make
+}
+
 iverilog = {
 	'name': 'iverilog/Verilog',
 	'lang': 'verilog', # gtksourceview
@@ -1521,6 +1568,7 @@ profiles = (
 	vocO2, vocOC, oo2c, obc, astrobeLPC2000, astrobeM3, astrobeM4, gpcp, zc, xcO2, xmO2, xcM2, xmM2, mocka, mikroPascal,
 	dcc32, fpc,
 	python, lua,
+	genie,
 	ocaml,
 	c, cxx,
 	umbriel, oberon0,
