@@ -728,7 +728,7 @@ def cCompile (text, encodedText, encoding, fileName):
 		i = i + 1
 	return (msg, errs, warns)
 
-_pGenieLineCol = re.compile('^(?:[^:]+):([1-9][0-9]*)\.([1-9][0-9]*)-([1-9][0-9]*)\.([1-9][0-9]*): ([^\n]+)\n')
+_pGenieLineCol = re.compile('^([^:]+):([1-9][0-9]*)\.([1-9][0-9]*)-([1-9][0-9]*)\.([1-9][0-9]*): ([^\n]+)\n')
 
 def genieCompile (text, encodedText, encoding, fileName):
 	assert type(text) is unicode
@@ -756,12 +756,13 @@ def genieCompile (text, encodedText, encoding, fileName):
 	for l in e.split('\n'):
 		r = _pGenieLineCol.match(l + '\n')
 		if r != None:
-			line = int(r.group(1)) - 1
-			col = int(r.group(2)) - 1
-			pos = (line, col)
-			link = (i, pos)
-			m = r.group(5)
-			add(m, link)
+			if sameFile(r.group(1), fileName):
+				line = int(r.group(2)) - 1
+				col = int(r.group(3)) - 1
+				pos = (line, col)
+				link = (i, pos)
+				m = r.group(6)
+				add(m, link)
 		i = i + 1
 
 	return (msg, errs, warns)
