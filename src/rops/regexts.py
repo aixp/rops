@@ -70,7 +70,7 @@ def regExt (e, cmd):
 	key = winreg.CreateKey( winreg.HKEY_CLASSES_ROOT, e )
 	try:
 		link = getValues(key).get('')
-		if link == None:
+		if link is None:
 			link = myLink
 			winreg.SetValueEx(key, '', 0, winreg.REG_SZ, link)
 		print('	-->', link)

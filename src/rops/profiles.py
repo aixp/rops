@@ -58,9 +58,9 @@ def cmdPollOnly (args):
 
 	t0 = time.time()
 	pollDone = False
-	e = ''
+	e = b''
 	eDone = False
-	o = ''
+	o = b''
 	oDone = False
 	while (not (pollDone and eDone and oDone)) and (time.time() - t0 < 10.0):
 		if not pollDone:
@@ -79,7 +79,9 @@ def cmdPollOnly (args):
 				else:
 					print('e IOerror', repr(ex))
 			else:
-				if x == '':
+				if x is None:
+					pass
+				elif x == b'':
 					eDone = True
 					if Trace: print('stderr done')
 				else:
@@ -95,7 +97,9 @@ def cmdPollOnly (args):
 				else:
 					print('o IOError', repr(ex))
 			else:
-				if x == '':
+				if x is None:
+					pass
+				elif x == b'':
 					oDone = True
 					if Trace: print('stdout done')
 				else:
@@ -316,28 +320,28 @@ def dev0Compile (text: str, encodedText: bytes, encoding: str, fileName: str | N
 	return (msg, errs, warns)
 
 # not mswindows
-def winePath (fileName):
+def winePath (fileName: str):
 	args = ["winepath", "-w", fileName]
 	try:
 		e, o = cmdPollOnly(args)
 	except Exception as e:
-		return False, 'winepath: ' + ' '.join(args).decode(locale.getpreferredencoding()) + ': ' + exMsg(e)
+		return False, 'winepath: ' + ' '.join(args) + ': ' + exMsg(e)
 	else:
-		if e == '':
+		if e == b'':
 			return True, o.rstrip()
 		else:
 			return False, '%s: %s' % (tr('#Error'), e.decode(locale.getpreferredencoding()))
 
 # unified lines separator, strip empty lines, remove duplicate lines
-def dcc32FilterStdout (o):
+def dcc32FilterStdout (o: bytes):
 	r = []
-	lastL = ''
-	for l in o.split('\r'):
-		for l1 in l.split('\n'):
-			if (l1 != '') and (lastL != l1):
+	lastL = b''
+	for l in o.split(b'\r'):
+		for l1 in l.split(b'\n'):
+			if (l1 != b'') and (lastL != l1):
 				r.append(l1)
 				lastL = l1
-	return '\n'.join(r)
+	return b'\n'.join(r)
 
 _pdcc32Line = re.compile('^([^\(]+)\(([0-9]+)\) ([^\n]+)\n')
 
@@ -418,7 +422,7 @@ def dcc32Compile (text: str, encodedText: bytes, encoding: str, fileName: str | 
 				except:
 					pass
 		else:
-			msg = "%s: %s %s %s!" % (tr('#Error'), tr('#file'), fName.decode(locale.getpreferredencoding()), tr('#already exists'))
+			msg = "%s: %s %s %s!" % (tr('#Error'), tr('#file'), fName, tr('#already exists'))
 			return (msg, None, None)
 	else:
 		msg = "'program ident;' or 'unit ident;' or 'library ident;' expected"
@@ -490,7 +494,7 @@ def fpcCompile (text: str, encodedText: bytes, encoding: str, fileName: str | No
 				except:
 					pass
 		else:
-			msg = "%s: %s %s %s!" % (tr('#Error'), tr('#file'), fName.decode(locale.getpreferredencoding()), tr('#already exists'))
+			msg = "%s: %s %s %s!" % (tr('#Error'), tr('#file'), fName, tr('#already exists'))
 			return (msg, None, None)
 	else:
 		msg = "'program ident;' or 'unit ident;' or 'library ident;' expected"
@@ -556,7 +560,7 @@ def gpcpCompile (text:str, encodedText: bytes, encoding: str, fileName: str | No
 				except:
 					pass
 		else:
-			msg = "%s: %s %s %s!" % (tr('#Error'), tr('#file'), baseName.decode(locale.getpreferredencoding()), tr('#already exists'))
+			msg = "%s: %s %s %s!" % (tr('#Error'), tr('#file'), baseName, tr('#already exists'))
 			return (msg, None, None)
 
 	else:
@@ -685,7 +689,7 @@ def astrobeCompile (text: str, encodedText: bytes, encoding: str, fileName: str 
 				except:
 					pass
 		else:
-			msg = "%s: %s %s %s!" % (tr('#Error'), tr('#file'), fName.decode(locale.getpreferredencoding()), tr('#already exists'))
+			msg = "%s: %s %s %s!" % (tr('#Error'), tr('#file'), fName, tr('#already exists'))
 			return (msg, None, None)
 	else:
 		msg = "'MODULE Ident;' expected"

@@ -250,7 +250,7 @@ def importText (prof, encodedText: bytes, parent):
 				text1 = decodeText(encodedText, autoEncoding)
 				if text1 is not None:
 					autoEncoding = normalizeEncoding(autoEncoding)
-					if text == None:
+					if text is None:
 						text = text1
 					del text1
 				else:
@@ -261,12 +261,12 @@ def importText (prof, encodedText: bytes, parent):
 		else:
 			autoEncoding = None
 
-		if (preferredEncoding is None) and (autoEncoding == None):
+		if (preferredEncoding is None) and (autoEncoding is None):
 			return None # can not detect file encoding
-		elif preferredEncoding == None: # autoEncoding != None
+		elif preferredEncoding is None: # autoEncoding is not None
 			encoding = autoEncoding
 			autoDetected = True
-		elif autoEncoding == None: # preferredEncoding != None
+		elif autoEncoding is None: # preferredEncoding is not None
 			encoding = preferredEncoding
 			autoDetected = False
 		elif preferredEncoding == autoEncoding:
@@ -345,7 +345,7 @@ def setupBuffer (buffer, langName, styleNames):
 				print('no style-scheme')
 		buffer.set_property("style-scheme", style)
 
-		if langName != None:
+		if langName is not None:
 			lm = GtkSource.LanguageManager.get_default()
 			lang = lm.get_language(langName)
 		else:
@@ -382,7 +382,7 @@ def SelectItem (parent, title, name, items):
 		Gtk.STOCK_OK, Gtk.ResponseType.OK,
 		Gtk.STOCK_CANCEL, Gtk.ResponseType.CANCEL
 	)
-	if parent == None:
+	if parent is None:
 		dialog.set_position(Gtk.WindowPosition.CENTER)
 
 	tv = Gtk.TreeView()
@@ -413,7 +413,7 @@ def SelectItem (parent, title, name, items):
 		x = tv.get_selection().get_selected()
 		model, iter = x
 		assert model == listStore
-		if iter == None: # gtk @ Ubuntu behavior
+		if iter is None: # gtk @ Ubuntu behavior
 			idx = 0
 		else:
 			path = listStore.get_path(iter)
@@ -442,7 +442,7 @@ def doCompile (base):
 
 	bakFileName = None
 	if base.mod['profile'].get('compileSavedOnly', False):
-		if base.mod['fileName'] == None:
+		if base.mod['fileName'] is None:
 			allow = base.do_save()
 		elif base.srcTextView.get_buffer().get_modified():
 			bakFileName = os.tempnam(os.path.dirname(os.path.realpath(base.mod['fileName'])), os.path.basename(base.mod['fileName'] + '.'))
@@ -483,7 +483,7 @@ def doCompile (base):
 		try:
 			msg, errs, warns = base.mod['profile']['compile']( text, encodedText, encoding, base.mod['fileName'] )
 		finally:
-			if bakFileName != None:
+			if bakFileName is not None:
 				try: # destination file must not exists on rename (Windows)
 					os.remove(base.mod['fileName'])
 				except:
@@ -495,10 +495,10 @@ def doCompile (base):
 					base.msg_set(msg1)
 					return
 
-		assert msg != None
+		assert msg is not None
 		base.msg_set(msg, errs=errs, warns=warns)
 
-		if (errs != None) and (len(errs) > 0):
+		if (errs is not None) and (len(errs) > 0):
 			msgLine, pos = errs[0]
 			line, col = pos
 			setCursorPos(base.srcTextView, line, col)
@@ -509,10 +509,10 @@ def getCursorPos (buffer):
 	return it.get_line(), it.get_line_offset()
 
 def setCursorPos (textView, line, col):
-	if (line != None) and (line >= 0):
+	if (line is not None) and (line >= 0):
 		buffer = textView.get_buffer()
 		it = buffer.get_iter_at_line(line)
-		if (col != None) and (col > 0):
+		if (col is not None) and (col > 0):
 			it1 = it.copy()
 			it1.forward_to_line_end()
 			lineLen = it1.get_line_offset()
@@ -537,7 +537,7 @@ def saveCurPos (fileName, textView):
 def SelectFont (parent, old):
 	dialog = Gtk.FontSelectionDialog(tr('#Select font'))
 	dialog.set_transient_for(parent)
-	if old != None:
+	if old is not None:
 		r = dialog.set_font_name(old)
 		if Trace: print('set font name:', r)
 	resp = dialog.run()
@@ -575,7 +575,7 @@ def translateBuilder (builder):
 			print('translateBuilder: not match type:', type(obj))
 
 # return values: '\n' | '\r\n' | '\r'
-def detectLineSep (text):
+def detectLineSep (text: str):
 	ns = text.count('\n')
 	rs = text.count('\r')
 	rns = text.count('\r\n')
@@ -591,7 +591,7 @@ def detectLineSep (text):
 
 # разделить такст на строки (в тексте могут использоваться разные разделители строк)
 # похоже совпадает с алгоритмом разделения на строки Gtk.TextView
-def splitToLines (text):
+def splitToLines (text: str):
 	lines = []
 	for l in text.split('\r\n'):
 		for l1 in re.split( '[\r\n]', l ):
@@ -708,7 +708,7 @@ class Application:
 	def do_find (self, start, backward):
 		textToFind = self.findStr.get_text()
 		assert type(textToFind) is str
-		if Trace: print('textToFind:', textToFind.encode(locale.getpreferredencoding()))
+		if Trace: print('textToFind:', textToFind)
 
 		if textToFind != '':
 			ignoreCase = self.findIgnCase.get_active()
@@ -755,9 +755,9 @@ class Application:
 		r = self.find_next()
 
 	def do_replace (self):
-		textToReplEncoded = self.findReplStr.get_text()
-		textToReplLen = len(textToReplEncoded)
-		if Trace: print('textToReplace:', textToReplEncoded.encode(locale.getpreferredencoding()))
+		textToRepl = self.findReplStr.get_text()
+		textToReplLen = len(textToRepl)
+		if Trace: print('textToReplace:', textToRepl)
 
 		r = self.srcTextView.get_buffer().get_selection_bounds()
 		if r != ():
@@ -767,7 +767,7 @@ class Application:
 
 			buffer = self.srcTextView.get_buffer()
 			buffer.delete(start, end)
-			buffer.insert(start, textToReplEncoded)
+			buffer.insert(start, textToRepl)
 
 			start = buffer.get_iter_at_offset(startOfs)
 			end = start.copy()
@@ -787,7 +787,7 @@ class Application:
 	def on_button4_clicked (self, widget, data=None):
 		if Trace: print('find and replace')
 
-		if self.find_next() != None:
+		if self.find_next() is not None:
 			r = self.do_replace()
 
 	def on_button5_clicked (self, widget, data=None):
@@ -796,7 +796,7 @@ class Application:
 		it = self.srcTextView.get_buffer().get_start_iter()
 		found = self.do_find(it, False)
 		cnt = 0
-		while found != None:
+		while found is not None:
 			matchStart, matchEnd = found
 			start, end = self.do_replace()
 			cnt = cnt + 1
@@ -850,9 +850,9 @@ class Application:
 			self.msg_set( tr('#Text convert error') + ': ' + exMsg(e) )
 			return
 
-		if (self.mod['fileName'] == None) or saveAs:
+		if (self.mod['fileName'] is None) or saveAs:
 			fileName = SaveFile(self.mainWindow, self.mod['profile']['extensions'])
-			if fileName != None:
+			if fileName is not None:
 				if os.path.exists(fileName) and not CanOverwrite(self.mainWindow, fileName):
 					return False
 			else:
@@ -897,7 +897,7 @@ class Application:
 
 	def modified_changed (self):
 		if Trace: print('modified:', self.mod['modified'])
-		if self.mod['fileName'] == None:
+		if self.mod['fileName'] is None:
 			t = tr('#untitled')
 		else:
 			t = self.mod['fileName']
@@ -908,18 +908,18 @@ class Application:
 	def do_new (self, prof=None, fileName=None):
 		# assert not modified
 
-		if prof == None:
+		if prof is None:
 			prof = SelectProfile(self.mainWindow, profiles.profiles)
-		if prof != None:
+		if prof is not None:
 			buffer = self.srcTextView.get_buffer()
 			setupBuffer(buffer, prof.get('lang'), prof.get('style'))
 			new = prof.get('empty')
-			if new != None:
+			if new is not None:
 				# new, fileName -> text, line, col
 				if type(new) is tuple:
 					text, line, col = new
 				else:
-					if fileName == None:
+					if fileName is None:
 						name = None
 					else:
 						name = '.'.join(os.path.basename(fileName).split('.')[:-1])
@@ -965,7 +965,7 @@ class Application:
 	def on_new (self, widget, data=None):
 		if Trace: print('new')
 		if self.check_save():
-			if self.mod['fileName'] != None:
+			if self.mod['fileName'] is not None:
 				saveCurPos(self.mod['fileName'], self.srcTextView)
 			self.do_new()
 
@@ -977,7 +977,7 @@ class Application:
 	def on_window1_destroy (self, widget, data=None):
 		if Trace: print('mainwin destroy')
 
-		if self.mod['fileName'] != None:
+		if self.mod['fileName'] is not None:
 			saveCurPos(self.mod['fileName'], self.srcTextView)
 
 		if self.settings['modified']:
@@ -1002,7 +1002,7 @@ class Application:
 			self.msg_set( tr('#File read error') + ': ' + exMsg(e) )
 		else:
 			r = importText(prof, encodedText, self.mainWindow)
-			if r == None:
+			if r is None:
 				self.msg_set( tr('#Text convert error') )
 			elif r == 'CANCEL':
 				pass
@@ -1019,7 +1019,7 @@ class Application:
 				buffer.set_modified(False)
 
 				lineSep = prof.get('lineSep', None)
-				if lineSep == None:
+				if lineSep is None:
 					lineSep = detectLineSep(text)
 				assert lineSep in ('\n', '\r\n', '\r')
 				if Trace: print('lineSep:', repr(lineSep))
@@ -1052,10 +1052,10 @@ class Application:
 		if self.check_save():
 			# assert not modified
 			r = OpenFile(self.mainWindow)
-			if r != None:
+			if r is not None:
 				fileName, prof = r
 				if Trace: print(fileName)
-				if self.mod['fileName'] != None:
+				if self.mod['fileName'] is not None:
 					saveCurPos(self.mod['fileName'], self.srcTextView)
 				self.do_open(fileName, prof)
 
@@ -1109,7 +1109,7 @@ class Application:
 		self.msgTextView.get_buffer().set_text(text)
 
 		def addLinks (l, tag):
-			if l != None:
+			if l is not None:
 				for msgLine, pos in l:
 					it1 = msgBuf.get_iter_at_line(msgLine)
 
@@ -1223,7 +1223,7 @@ class Application:
 		view.show()
 		self.srcTextView = view
 
-		if self.settings['font'] != None:
+		if self.settings['font'] is not None:
 			self.srcTextView.modify_font(Pango.FontDescription(self.settings['font']))
 
 		self.msgTextView = builder.get_object('textview2')
@@ -1254,7 +1254,7 @@ class Application:
 
 		prof = profiles.profiles[0]
 		self.do_new(prof=prof)
-		if par == None:
+		if par is None:
 			self.on_new(None)
 		else:
 			fileName, prof = par
@@ -1289,10 +1289,10 @@ def getProf (parent, fileName):
 
 def main ():
 	x = locale.getlocale()[0]
-	if x != None:
+	if x is not None:
 		setTrLang( x.split('_')[0] )
 
-	if Gdk.Display.get_default() != None:
+	if Gdk.Display.get_default() is not None:
 		# 4 варианта начала работы:
 		# 1) запустили без параметров для создания нового файла
 		# 2) запустили без параметров для открытия нового файла
@@ -1303,7 +1303,7 @@ def main ():
 			prof = getProf(None, fileName)
 			if prof == False:
 				sys.stderr.write(tr('#can not lookup profile by file extension').encode(locale.getpreferredencoding()) + '\n')
-			elif prof != None:
+			elif prof is not None:
 				Application( (fileName, prof) ).main()
 		else:
 			Application(None).main()

@@ -124,11 +124,11 @@ def localeToAlpha (localeName):
 		return langToAlpha.get(localeName.split('_')[0])
 
 def getByLocale (localeName, oem=False):
-	if localeName == None:
+	if localeName is None:
 		return 'ascii'
 	else:
 		alpha = localeToAlpha(localeName)
-		if alpha != None:
+		if alpha is not None:
 			if oem:
 				return oemAlphaToEncoding[alpha]
 			else:

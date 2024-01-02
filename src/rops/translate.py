@@ -15,9 +15,9 @@ def tr (s):
 
 	f = s[1:]
 
-	if d != None:
+	if d is not None:
 		t = d.get(f, None)
-		if t != None:
+		if t is not None:
 			return t
 		else:
 			print('NO TRANSLATION:', f)

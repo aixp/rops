@@ -22,7 +22,7 @@ def shiftLeft (buffer, char):
 	assert char != chr(0)
 
 	r = getSelLines(buffer)
-	if r != None:
+	if r is not None:
 		startLine, endLine = r
 		buffer.begin_user_action()
 		i = startLine
@@ -43,7 +43,7 @@ def shiftRight (buffer, char, forceInsert):
 	assert char != chr(0)
 
 	r = getSelLines(buffer)
-	if r != None:
+	if r is not None:
 		startLine, endLine = r
 		buffer.begin_user_action()
 		i = startLine
@@ -74,19 +74,19 @@ def calcMinIndent (buffer, startLine, endLine):
 			c = start.get_char()
 
 		if c != '\n': # line not empty
-			if (minIndent == None) or (minIndent > indent):
+			if (minIndent is None) or (minIndent > indent):
 				minIndent = indent
 
 		i = i + 1
 
-	if minIndent == None: # all lines is empty
+	if minIndent is None: # all lines is empty
 		minIndent = 0
 
 	return minIndent
 
 def sharpComment (buffer):
 	r = getSelLines(buffer)
-	if r != None:
+	if r is not None:
 		startLine, endLine = r
 
 		indent = calcMinIndent(buffer, startLine, endLine)
@@ -110,7 +110,7 @@ def sharpComment (buffer):
 
 def sharpUnComment (buffer):
 	r = getSelLines(buffer)
-	if r != None:
+	if r is not None:
 		startLine, endLine = r
 
 		buffer.begin_user_action()
