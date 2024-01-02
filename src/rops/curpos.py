@@ -39,7 +39,7 @@ def saveCurPos (fileName: str, line: int, col: int):
 		oldVal = db.get(key)
 		if oldVal is None:
 			toDel = None
-			for k, v in db.iteritems():
+			for k, v in db.items():
 				l, c, last = v
 				if last == CUR_POS_DB_LEN - 1:
 					assert toDel is None
@@ -51,7 +51,7 @@ def saveCurPos (fileName: str, line: int, col: int):
 				if Trace: print(toDel, 'removed from cursor position db')
 		else:
 			oldLast = oldVal[2]
-			for k, v in db.iteritems():
+			for k, v in db.items():
 				l, c, last = v
 				if last < oldLast:
 					db[k] = (l, c, last + 1)
