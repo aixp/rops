@@ -556,7 +556,7 @@ saveSettings = lambda settings: store.save(_settingsStoreName, settings)
 
 def translateBuilder (builder):
 	for obj in builder.get_objects():
-		# делаем так, потому что при попытке получения свойств по крейней мере у SeparatorMenuItem он исчезает (где-то ошибка в Gtk или в PyGtk)
+		# we do this because when we try to get properties, at least for SeparatorMenuItem, it disappears (there is an error somewhere in Gtk or PyGtk)
 		if type(obj) in (Gtk.Window, Gtk.MenuItem, Gtk.Label, Gtk.Button, Gtk.CheckButton):
 			if type(obj) is Gtk.Window:
 				label = obj.get_title()
@@ -589,8 +589,6 @@ def detectLineSep (text: str):
 	else:
 		return '\n'
 
-# разделить такст на строки (в тексте могут использоваться разные разделители строк)
-# похоже совпадает с алгоритмом разделения на строки Gtk.TextView
 def splitToLines (text: str):
 	lines = []
 	for l in text.split('\r\n'):
@@ -1293,21 +1291,16 @@ def main ():
 		setTrLang( x.split('_')[0] )
 
 	if Gdk.Display.get_default() is not None:
-		# 4 варианта начала работы:
-		# 1) запустили без параметров для создания нового файла
-		# 2) запустили без параметров для открытия нового файла
-		# 3) запустили для открытия заданного файла
-		# 4) запустили для создания заданного файла
 		if len(sys.argv) == 2:
 			fileName = sys.argv[1]
 			prof = getProf(None, fileName)
 			if prof == False:
-				sys.stderr.write(tr('#can not lookup profile by file extension').encode(locale.getpreferredencoding()) + '\n')
+				sys.stderr.write(tr('#can not lookup profile by file extension') + '\n')
 			elif prof is not None:
 				Application( (fileName, prof) ).main()
 		else:
 			Application(None).main()
-		if Trace: print(tr('#all done').encode(locale.getpreferredencoding()))
+		if Trace: print(tr('#all done'))
 
 if __name__ == '__main__':
 	main()
