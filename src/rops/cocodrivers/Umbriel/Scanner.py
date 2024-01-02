@@ -1,6 +1,9 @@
 
 import sys
 
+unicode = lambda x: x
+unichr = chr
+
 class Token( object ):
    def __init__( self ):
       self.kind   = 0     # token kind
@@ -17,7 +20,7 @@ class Position( object ):    # position of source code stretch (e.g. semantic ac
       assert isinstance( beg, int )
       assert isinstance( len, int )
       assert isinstance( col, int )
-      
+
       self.buf = buf
       self.beg = beg   # start relative to the beginning of the file
       self.len = len   # length of stretch
@@ -112,7 +115,7 @@ class Scanner(object):
 
    def __init__( self, s ):
       self.buffer = Buffer( unicode(s) ) # the buffer instance
-      
+
       self.ch        = u'\0'       # current input character
       self.pos       = -1          # column number of current character
       self.line      = 1           # line number of current character
@@ -121,10 +124,10 @@ class Scanner(object):
       self.NextCh( )
       self.ignore    = set( )      # set of characters to be ignored by the scanner
       self.ignore.add( ord(' ') )  # blanks are always white space
-      self.ignore.add(9) 
-      self.ignore.add(10) 
-      self.ignore.add(11) 
-      self.ignore.add(12) 
+      self.ignore.add(9)
+      self.ignore.add(10)
+      self.ignore.add(11)
+      self.ignore.add(12)
 
       # fill token list
       self.tokens = Token( )       # the complete input token stream
@@ -155,7 +158,7 @@ class Scanner(object):
          if self.ch == Scanner.EOL:
             self.line += 1
             self.lineStart = self.pos + 1
-      
+
 
 
 
@@ -530,4 +533,3 @@ class Scanner(object):
 
    def ResetPeek( self ):
       self.pt = self.t
-

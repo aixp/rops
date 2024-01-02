@@ -1,4 +1,4 @@
-# Alexander Shiryaev, 2011
+# Alexander Shiryaev, 2011, 2024
 
 # Driver.Process result ->profiles compile result
 def toCompileResult (x):
@@ -10,7 +10,4 @@ def toCompileResult (x):
 		errs.append( (i, (line - 1, col - 1)) )
 		msg.append(s)
 		i = i + 1
-	return ( u'\n'.join(msg), errs, warns )
-
-if __name__ == '__main__':
-	main()
+	return ( '\n'.join(msg), errs, warns )

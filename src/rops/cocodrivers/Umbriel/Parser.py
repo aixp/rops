@@ -124,20 +124,20 @@ class Errors( object ):
       if Errors.mergeErrors:
          # Initialize the line iterator
          srcLineIter = iter(sourceBuffer)
-         srcLineStr  = srcLineIter.next( )
+         srcLineStr  = next(srcLineIter)
          srcLineNum  = 1
 
          try:
             # Initialize the error iterator
             errIter = iter(Errors.errors)
-            errRec  = errIter.next( )
+            errRec  = next(errIter)
 
             # Advance to the source line of the next error
             while srcLineNum < errRec.line:
                if Trace:
                    Errors.mergedList.write( '%4d %s\n' % (srcLineNum, srcLineStr) )
 
-               srcLineStr = srcLineIter.next( )
+               srcLineStr = next(srcLineIter)
                srcLineNum += 1
 
             # Write out all errors for the current source line
@@ -145,7 +145,7 @@ class Errors( object ):
                if Trace:
                   Errors.display( srcLineStr, errRec )
 
-               errRec = errIter.next( )
+               errRec = next(errIter)
          except:
             pass
 
@@ -155,7 +155,7 @@ class Errors( object ):
             while True:
                Errors.mergedList.write( '%4d %s\n' % (srcLineNum, srcLineStr) )
 
-               srcLineStr = srcLineIter.next( )
+               srcLineStr = next(srcLineIter)
                srcLineNum += 1
          except:
             pass
@@ -850,5 +850,3 @@ class Parser( object ):
       72 : "invalid NotOperator",
       73 : "invalid AndOperator",
       }
-
-

@@ -17,4 +17,3 @@ def Process (s):
 	Parser.Errors.Summarize(scanner.buffer)
 
 	return tuple( [ (e.line, e.col, e.str) for e in Parser.Errors.errors ] )
-
