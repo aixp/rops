@@ -3,10 +3,10 @@
 
 import os
 import _winreg as winreg
-import profiles
+from . import profiles
 
-myLink = u'IDE.File'
-editWithTitle = u'Edit with IDE'
+myLink = 'IDE.File'
+editWithTitle = 'Edit with IDE'
 
 def getPyVersions ():
 	pyCoreKey = winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, 'SOFTWARE\Python\PythonCore')
@@ -26,7 +26,7 @@ def getPyDir (pyVer):
 def getPythonDir ():
 	pyVersions = getPyVersions()
 	pyVer = pyVersions[-1:][0]
-	print 'Python version:', pyVer
+	print('Python version:', pyVer)
 	pyDir = getPyDir(pyVer)
 	return pyDir
 
@@ -44,7 +44,7 @@ def getValues (key):
 		else:
 			k, v, x = val
 			assert x == 1
-			assert not d.has_key(k)
+			assert k not in d
 			d[k] = v
 		i = i + 1
 	return d
@@ -65,7 +65,7 @@ def getKeys (key):
 def regExt (e, cmd):
 	assert e.startswith('.') or (e == '*')
 
-	print 'registering:', e
+	print('registering:', e)
 
 	key = winreg.CreateKey( winreg.HKEY_CLASSES_ROOT, e )
 	try:
@@ -73,17 +73,17 @@ def regExt (e, cmd):
 		if link == None:
 			link = myLink
 			winreg.SetValueEx(key, '', 0, winreg.REG_SZ, link)
-		print '	-->', link
+		print('	-->', link)
 	finally:
 		winreg.CloseKey(key)
 
 	key = winreg.CreateKey(winreg.HKEY_CLASSES_ROOT, link)
 	try:
-		shellKey = winreg.CreateKey(key, u'shell')
+		shellKey = winreg.CreateKey(key, 'shell')
 		try:
 			editWithKey = winreg.CreateKey(shellKey, editWithTitle)
 			try:
-				commandKey = winreg.CreateKey(editWithKey, u'command')
+				commandKey = winreg.CreateKey(editWithKey, 'command')
 				try:
 					winreg.SetValueEx(commandKey, '', 0, winreg.REG_SZ, cmd)
 				finally:
@@ -97,7 +97,7 @@ def regExt (e, cmd):
 
 def registerAll ():
 	cmd = getCmd()
-	print 'command:', cmd
+	print('command:', cmd)
 
 	s = set()
 	for prof in profiles.profiles:

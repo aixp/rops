@@ -28,9 +28,9 @@
 
 import sys
 
-from Scanner import Token
-from Scanner import Scanner
-from Scanner import Position
+from .Scanner import Token
+from .Scanner import Scanner
+from .Scanner import Position
 
 Trace = False
 
@@ -100,7 +100,7 @@ class Errors( object ):
 
    @staticmethod
    def Exception( errMsg ):
-      print errMsg
+      print(errMsg)
       assert False
 
    @staticmethod
@@ -184,7 +184,7 @@ class Parser( object ):
    x          = False
    minErrDist = 2
 
-   
+
    def __init__( self ):
       self.scanner     = None
       self.token       = None           # last recognized token
@@ -231,7 +231,7 @@ class Parser( object ):
          if self.la.kind <= Parser.maxT:
             self.errDist += 1
             break
-         
+
          self.la = self.token
 
    def Expect( self, n ):
@@ -774,7 +774,7 @@ class Parser( object ):
       ]
 
    errorMessages = {
-      
+
       0 : "EOF expected",
       1 : "identifier expected",
       2 : "char expected",

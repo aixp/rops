@@ -1,10 +1,12 @@
 # -*- coding: utf-8 -*-
-# Alexander Shiryaev, 2010-2017, 2021
+#
+# Alexander Shiryaev, 2010-2017, 2021, 2024
+#
 
-import compiler, re, subprocess, os, sys, locale, tempfile, time, errno
-import util, winenc
-from translate import tr
-import cocodrivers
+import re, subprocess, os, sys, locale, tempfile, time, errno, traceback
+from . import util, winenc
+from .translate import tr
+from . import cocodrivers
 
 mswindows = (sys.platform == 'win32')
 
@@ -20,9 +22,9 @@ def sameFile (fn1, fn2):
 		return os.path.samefile(fn1, fn2)
 
 def cmd (args, input=None):
-	if Trace: print 'cmd', args
+	if Trace: print('cmd', args)
 
-	if input == None:
+	if input is None:
 		inp = None
 	else:
 		inp = subprocess.PIPE
@@ -30,7 +32,7 @@ def cmd (args, input=None):
 	close_fds = not mswindows
 	p = subprocess.Popen(args, bufsize=8192, stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=inp, close_fds=close_fds)
 
-	if input != None:
+	if input is not None:
 		p.stdin.write(input)
 
 	o, e = p.communicate()
@@ -46,7 +48,7 @@ def setnonblock (fd):
 # не ждём завершения дочерних процессов (wine)
 # not mswindows
 def cmdPollOnly (args):
-	if Trace: print 'cmdPollOnly', args
+	if Trace: print('cmdPollOnly', args)
 
 	close_fds = not mswindows
 	p = subprocess.Popen(args, bufsize=8192, stdout=subprocess.PIPE, stderr=subprocess.PIPE, close_fds=close_fds)
@@ -63,50 +65,51 @@ def cmdPollOnly (args):
 	while (not (pollDone and eDone and oDone)) and (time.time() - t0 < 10.0):
 		if not pollDone:
 			x = p.poll()
-			pollDone = x != None
+			pollDone = x is not None
 			if pollDone:
-				if Trace: print 'poll done'
+				if Trace: print('poll done')
 		if not eDone:
 			try:
 				x = p.stderr.read()
-			except IOError, ex:
+			except IOError as ex:
 				if ex.strerror == 'Resource temporarily unavailable':
 					pass
 				elif ex.errno == errno.EAGAIN: # 'Resource temporarily unavailable'
 					pass
 				else:
-					print 'e IOerror', repr(ex)
+					print('e IOerror', repr(ex))
 			else:
 				if x == '':
 					eDone = True
-					if Trace: print 'stderr done'
+					if Trace: print('stderr done')
 				else:
 					e = e + x
 		if not oDone:
 			try:
 				x = p.stdout.read()
-			except IOError, ex:
+			except IOError as ex:
 				if ex.strerror == 'Resource temporarily unavailable':
 					pass
 				elif ex.errno == errno.EAGAIN: # 'Resource temporarily unavailable'
 					pass
 				else:
-					print 'o IOError', repr(ex)
+					print('o IOError', repr(ex))
 			else:
 				if x == '':
 					oDone = True
-					if Trace: print 'stdout done'
+					if Trace: print('stdout done')
 				else:
 					o = o + x
 	if not (pollDone and eDone and oDone):
-		print 'Timeout'
+		print('Timeout')
 
 	p.stderr.close()
 	p.stdout.close()
 
 	return e, o
 
-exMsg = lambda e: str(e).decode(locale.getpreferredencoding())
+# exMsg = lambda e: str(e)
+exMsg = lambda e: ''.join(traceback.format_exception(e))
 
 _pMod = re.compile('^\s*MODULE\s+([a-zA-Z][a-zA-Z0-9]*)\s*;')
 _poo2cMod = re.compile('^\s*MODULE\s+([a-zA-Z][a-zA-Z0-9]*)\s*(?:\[[^\]]+\]\s*)?;')
@@ -129,11 +132,10 @@ def posToLineCol0 (src, pos):
 		else:
 			return (line, pos)
 
-# fileName may be None
-def vocCompile (flag, text, encodedText, encoding, fileName):
-	assert type(text) is unicode
-	assert type(encodedText) is str
-	assert encoding != None
+def vocCompile (flag, text: str, encodedText: bytes, encoding: str, fileName: str | None):
+	assert type(text) is str
+	assert type(encodedText) is bytes
+	assert encoding is not None
 
 	xCmd = 'voc'
 
@@ -142,7 +144,7 @@ def vocCompile (flag, text, encodedText, encoding, fileName):
 		try:
 			try:
 				os.write(fd, encodedText)
-			except Exception, e:
+			except Exception as e:
 				msg = tr('#File write error') + ': ' + exMsg(e)
 				return (msg, None, None)
 		finally:
@@ -155,7 +157,7 @@ def vocCompile (flag, text, encodedText, encoding, fileName):
 				e, o = cmd([xCmd, "-f", flag, name])
 			else:
 				e, o = cmd(["env", "LANG=C", xCmd, "-f", flag, name])
-		except Exception, e:
+		except Exception as e:
 			msg = xCmd + ': ' + exMsg(e)
 			return (msg, None, None)
 	finally:
@@ -164,7 +166,9 @@ def vocCompile (flag, text, encodedText, encoding, fileName):
 		except:
 			pass
 
-	msg = e + o.decode( encoding )
+	e = e.decode(encoding)
+	o = o.decode(encoding)
+	msg = e + o
 
 	eLines = e.count('\n')
 	errs = []
@@ -172,7 +176,7 @@ def vocCompile (flag, text, encodedText, encoding, fileName):
 	i = eLines
 	for l in o.split('\n'):
 		r = _pVocPos.match(l + '\n')
-		if r != None:
+		if r is not None:
 			line, col = posToLineCol0(text, int(r.group(1)) + 1)
 			error = r.group(4)
 			pos = (line, col)
@@ -189,23 +193,22 @@ def vocCompile (flag, text, encodedText, encoding, fileName):
 vocO2Compile = lambda text, encodedText, encoding, fileName: vocCompile('-O2', text, encodedText, encoding, fileName)
 vocOCCompile = lambda text, encodedText, encoding, fileName: vocCompile('-OC', text, encodedText, encoding, fileName)
 
-# fileName may be None
-def oo2cCompile (text, encodedText, encoding, fileName):
-	assert type(text) is unicode
-	assert type(encodedText) is str
-	assert encoding != None
+def oo2cCompile (text: str, encodedText: bytes, encoding: str, fileName: str | None):
+	assert type(text) is str
+	assert type(encodedText) is bytes
+	assert encoding is not None
 
 	# suffix = '.Mod'
 	xCmd = 'oo2c'
 
 	for l in text.split('\n')[:2]:
 		r = _poo2cMod.match(l)
-		if r != None:
+		if r is not None:
 			break
 	else:
 		r = None
 
-	if r != None:
+	if r is not None:
 		modName = r.group(1).encode('ascii')
 
 		fd, name = tempfile.mkstemp(prefix=modName + '.')
@@ -213,7 +216,7 @@ def oo2cCompile (text, encodedText, encoding, fileName):
 			try:
 				try:
 					os.write(fd, encodedText.replace('\t', ' '))
-				except Exception, e:
+				except Exception as e:
 					msg = tr('#File write error') + ': ' + exMsg(e)
 					return (msg, None, None)
 			finally:
@@ -223,7 +226,7 @@ def oo2cCompile (text, encodedText, encoding, fileName):
 					pass
 			try:
 				e, o = cmd([xCmd, name])
-			except Exception, e:
+			except Exception as e:
 				msg = xCmd + ': ' + exMsg(e)
 				return (msg, None, None)
 		finally:
@@ -232,7 +235,9 @@ def oo2cCompile (text, encodedText, encoding, fileName):
 			except:
 				pass
 
-		msg = e + o.decode( encoding )
+		e = e.decode(encoding)
+		o = o.decode(encoding)
+		msg = e + o
 
 		eLines = e.count('\n')
 		errs = []
@@ -240,7 +245,7 @@ def oo2cCompile (text, encodedText, encoding, fileName):
 		i = eLines
 		for l in o.split('\n'):
 			r = _pcLineCol.match(l + '\n')
-			if r != None:
+			if r is not None:
 				line = int(r.group(1)) - 1
 				col = int(r.group(2)) - 1
 				pos = (line, col)
@@ -254,16 +259,16 @@ def oo2cCompile (text, encodedText, encoding, fileName):
 		return (msg, errs, warns)
 
 	else:
-		msg = u"'MODULE Ident;' expected"
+		msg = "'MODULE Ident;' expected"
 		return (msg, None, None)
 
 
 _dev0Pos = re.compile("^  pos =  ([0-9]+), error = '([^']+)'$")
 
-def dev0Compile (text, encodedText, encoding, fileName):
-	assert type(text) is unicode
-	assert type(encodedText) is str
-	assert encoding != None
+def dev0Compile (text: str, encodedText: bytes, encoding: str, fileName: str | None):
+	assert type(text) is str
+	assert type(encodedText) is bytes
+	assert encoding is not None
 
 	xCmd = 'blackbox'
 
@@ -272,7 +277,7 @@ def dev0Compile (text, encodedText, encoding, fileName):
 		try:
 			try:
 				os.write(fd, encodedText)
-			except Exception, e:
+			except Exception as e:
 				msg = tr('#File write error') + ': ' + exMsg(e)
 				return (msg, None, None)
 		finally:
@@ -282,7 +287,7 @@ def dev0Compile (text, encodedText, encoding, fileName):
 				pass
 		try:
 			e, o = cmd([xCmd], "ConsCompiler.Compile('%s', '%s')\n" % (os.path.dirname(name), os.path.basename(name),))
-		except Exception, e:
+		except Exception as e:
 			msg = xCmd + ': ' + exMsg(e)
 			return (msg, None, None)
 	finally:
@@ -291,7 +296,9 @@ def dev0Compile (text, encodedText, encoding, fileName):
 		except:
 			pass
 
-	msg = e + o.decode( encoding )
+	e = e.decode(encoding)
+	o = o.decode(encoding)
+	msg = e + o
 
 	eLines = e.count('\n')
 	errs = []
@@ -299,7 +306,7 @@ def dev0Compile (text, encodedText, encoding, fileName):
 	i = eLines
 	for l in o.split('\n'):
 		r = _dev0Pos.match(l)
-		if r != None:
+		if r is not None:
 			line, col = posToLineCol0(text, int(r.group(1)))
 			error = r.group(2)
 			pos = (line, col)
@@ -313,7 +320,7 @@ def winePath (fileName):
 	args = ["winepath", "-w", fileName]
 	try:
 		e, o = cmdPollOnly(args)
-	except Exception, e:
+	except Exception as e:
 		return False, 'winepath: ' + ' '.join(args).decode(locale.getpreferredencoding()) + ': ' + exMsg(e)
 	else:
 		if e == '':
@@ -334,18 +341,17 @@ def dcc32FilterStdout (o):
 
 _pdcc32Line = re.compile('^([^\(]+)\(([0-9]+)\) ([^\n]+)\n')
 
-# fileName may be None
-def dcc32Compile (text, encodedText, encoding, fileName):
-	assert type(text) is unicode
-	assert type(encodedText) is str
-	assert encoding != None
+def dcc32Compile (text: str, encodedText: bytes, encoding: str, fileName: str | None):
+	assert type(text) is str
+	assert type(encodedText) is bytes
+	assert encoding is not None
 
 	r = _pPas.match(text)
-	if r != None:
+	if r is not None:
 		modName = r.group(1).encode('ascii')
 		baseName = modName + '.$$$'
 
-		if fileName == None:
+		if fileName is None:
 			fName = baseName
 			inCurDir = True
 		else:
@@ -361,13 +367,13 @@ def dcc32Compile (text, encodedText, encoding, fileName):
 			try:
 				try:
 					util.writeFile( fName, encodedText.replace('\t', ' '), sync=False )
-				except Exception, e:
+				except Exception as e:
 					msg = tr('#File write error') + ': ' + exMsg(e)
 					return (msg, None, None)
 				if mswindows:
 					try:
 						e, o = cmd(["dcc32", "-R+", fName])
-					except Exception, e:
+					except Exception as e:
 						msg = 'dcc32: ' + exMsg(e)
 						return (msg, None, None)
 				else:
@@ -379,13 +385,15 @@ def dcc32Compile (text, encodedText, encoding, fileName):
 						s = baseName
 					try:
 						e, o = cmdPollOnly(["wine", "dcc32", "-R+", s])
-					except Exception, e:
+					except Exception as e:
 						msg = 'wine dcc32: ' + exMsg(e)
 						return (msg, None, None)
 				o = dcc32FilterStdout(o)
 
 				# указываем кодировку вывода такую же, как и кодировка содержимого файла, хотя скорее всего dcc32 использует только ascii-кодировку
-				msg = e + o.decode( encoding )
+				e = e.decode(encoding)
+				o = o.decode(encoding)
+				msg = e + o
 
 				eLines = e.count('\n')
 				errs = []
@@ -393,7 +401,7 @@ def dcc32Compile (text, encodedText, encoding, fileName):
 				i = eLines
 				for l in o.split('\n'):
 					r = _pdcc32Line.match(l + '\n')
-					if r and (r.group(1) == baseName):
+					if (r is not None) and (r.group(1) == baseName):
 						line = int(r.group(2)) - 1
 						pos = (line, None)
 						link = (i, pos)
@@ -413,19 +421,18 @@ def dcc32Compile (text, encodedText, encoding, fileName):
 			msg = "%s: %s %s %s!" % (tr('#Error'), tr('#file'), fName.decode(locale.getpreferredencoding()), tr('#already exists'))
 			return (msg, None, None)
 	else:
-		msg = u"'program ident;' or 'unit ident;' or 'library ident;' expected"
+		msg = "'program ident;' or 'unit ident;' or 'library ident;' expected"
 		return (msg, None, None)
 
 _pfpcLine = re.compile('^([^\(]+)\(([0-9]+),([0-9]+)\) ([^\n]+)\n')
 
-# fileName may be None
-def fpcCompile (text, encodedText, encoding, fileName):
-	assert type(text) is unicode
-	assert type(encodedText) is str
-	assert encoding != None
+def fpcCompile (text: str, encodedText: bytes, encoding: str, fileName: str | None):
+	assert type(text) is str
+	assert type(encodedText) is bytes
+	assert encoding is not None
 
 	r = _pPas.match(text)
-	if r != None:
+	if r is not None:
 		modName = r.group(1).encode('ascii')
 		baseName = modName + '.$$$'
 
@@ -445,17 +452,19 @@ def fpcCompile (text, encodedText, encoding, fileName):
 			try:
 				try:
 					util.writeFile( fName, encodedText.replace('\t', ' '), sync=False )
-				except Exception, e:
+				except Exception as e:
 					msg = tr('#File write error') + ': ' + exMsg(e)
 					return (msg, None, None)
 
 				try:
 					e, o = cmd(["fpc", fName])
-				except Exception, e:
+				except Exception as e:
 					msg = 'fpc: ' + exMsg(e)
 					return (msg, None, None)
 
-				msg = e + o.decode( encoding )
+				e = e.decode(encoding)
+				o = o.decode(encoding)
+				msg = e + o
 
 				eLines = e.count('\n')
 				errs = []
@@ -463,7 +472,7 @@ def fpcCompile (text, encodedText, encoding, fileName):
 				i = eLines
 				for l in o.split('\n'):
 					r = _pfpcLine.match(l + '\n')
-					if r and (r.group(1) == baseName):
+					if (r is not None) and (r.group(1) == baseName):
 						line = int(r.group(2)) - 1
 						col = int(r.group(3)) - 1
 						pos = (line, col)
@@ -484,19 +493,18 @@ def fpcCompile (text, encodedText, encoding, fileName):
 			msg = "%s: %s %s %s!" % (tr('#Error'), tr('#file'), fName.decode(locale.getpreferredencoding()), tr('#already exists'))
 			return (msg, None, None)
 	else:
-		msg = u"'program ident;' or 'unit ident;' or 'library ident;' expected"
+		msg = "'program ident;' or 'unit ident;' or 'library ident;' expected"
 		return (msg, None, None)
 
 _pgpcpLine = re.compile("^ *([0-9]+) +")
 
-# fileName may be None
-def gpcpCompile (text, encodedText, encoding, fileName):
-	assert type(text) is unicode
-	assert type(encodedText) is str
-	assert encoding != None
+def gpcpCompile (text:str, encodedText: bytes, encoding: str, fileName: str | None):
+	assert type(text) is str
+	assert type(encodedText) is bytes
+	assert encoding is not None
 
 	r = _pMod.match(text)
-	if r != None:
+	if r is not None:
 		modName = r.group(1).encode('ascii')
 		baseName = modName + '.$$$'
 
@@ -504,17 +512,19 @@ def gpcpCompile (text, encodedText, encoding, fileName):
 			try:
 				try:
 					util.writeFile( baseName, encodedText.replace('\t', ' '), sync=False )
-				except Exception, e:
+				except Exception as e:
 					msg = tr('#File write error') + ': ' + exMsg(e)
 					return (msg, None, None)
 
 				try:
 					e, o = cmd(["gpcp", "/nodebug", "/hsize=32000", "/unsafe", baseName])
-				except Exception, e:
+				except Exception as e:
 					msg = 'gpcp: ' + exMsg(e)
 					return (msg, None, None)
 
-				msg = e + o.decode( encoding )
+				e = e.decode(encoding)
+				o = o.decode(encoding)
+				msg = e + o
 
 				eLines = e.count('\n')
 				errs = []
@@ -524,7 +534,7 @@ def gpcpCompile (text, encodedText, encoding, fileName):
 				for l in o.split('\n'):
 					if state == 0:
 						r = _pgpcpLine.match(l)
-						if r:
+						if r is not None:
 							line = int(r.group(1)) - 1
 							state = 1 # line pos matched
 					elif state == 1:
@@ -550,16 +560,15 @@ def gpcpCompile (text, encodedText, encoding, fileName):
 			return (msg, None, None)
 
 	else:
-		msg = u"'MODULE Ident;' expected"
+		msg = "'MODULE Ident;' expected"
 		return (msg, None, None)
 
 _paLineCol = re.compile('^ *([0-9]+) +([0-9]+) *(Error|Warning): *([^\n]+)\n')
 
-# fileName may be None
-def astrobeCompile (text, encodedText, encoding, fileName, astrobe):
-	assert type(text) is unicode
-	assert type(encodedText) is str
-	assert encoding != None
+def astrobeCompile (text: str, encodedText: bytes, encoding: str, fileName: str | None, astrobe: int):
+	assert type(text) is str
+	assert type(encodedText) is bytes
+	assert encoding is not None
 
 	if astrobe == 0: # LPC2000
 		astrobeDir = "Astrobe Professional Edition"
@@ -571,11 +580,11 @@ def astrobeCompile (text, encodedText, encoding, fileName, astrobe):
 		assert False
 
 	r = _pMod.match(text)
-	if r != None:
+	if r is not None:
 		modName = r.group(1).encode('ascii')
 		baseName = modName + '.$$$'
 
-		if fileName == None:
+		if fileName is None:
 			fName = baseName
 			inCurDir = True
 		else:
@@ -591,7 +600,7 @@ def astrobeCompile (text, encodedText, encoding, fileName, astrobe):
 			try: # for remove file fName
 				try:
 					util.writeFile( fName, encodedText.replace('\t', ' '), sync=False )
-				except Exception, e:
+				except Exception as e:
 					msg = tr('#File write error') + ': ' + exMsg(e)
 					return (msg, None, None)
 				isMono = False
@@ -604,7 +613,7 @@ def astrobeCompile (text, encodedText, encoding, fileName, astrobe):
 							e, o = cmd([exe, fName])
 						else:
 							assert False
-					except Exception, e:
+					except Exception as e:
 						msg = 'AstrobeCompile: ' + exMsg(e)
 						return (msg, None, None)
 				else: # not mswindows
@@ -624,7 +633,7 @@ def astrobeCompile (text, encodedText, encoding, fileName, astrobe):
 							else:
 								assert False
 							tryMono = False
-						except Exception, e:
+						except Exception as e:
 							if e.errno == errno.ENOENT:
 								tryMono = True
 							else:
@@ -641,10 +650,12 @@ def astrobeCompile (text, encodedText, encoding, fileName, astrobe):
 							else:
 								assert False
 							isMono = True
-						except Exception, e:
+						except Exception as e:
 							msg = 'mono AstrobeCompile: ' + exMsg(e)
 							return (msg, None, None)
-				msg = e + o.decode( encoding )
+				e = e.decode(encoding)
+				o = o.decode(encoding)
+				msg = e + o
 
 				eLines = e.count('\n')
 				errs = []
@@ -656,7 +667,7 @@ def astrobeCompile (text, encodedText, encoding, fileName, astrobe):
 					sep = '\r\n'
 				for l in o.split(sep):
 					r = _paLineCol.match(l + '\n')
-					if r:
+					if r is not None:
 						line = int(r.group(1)) - 1
 						col = int(r.group(2)) - 1
 						pos = (line, col)
@@ -677,27 +688,29 @@ def astrobeCompile (text, encodedText, encoding, fileName, astrobe):
 			msg = "%s: %s %s %s!" % (tr('#Error'), tr('#file'), fName.decode(locale.getpreferredencoding()), tr('#already exists'))
 			return (msg, None, None)
 	else:
-		msg = u"'MODULE Ident;' expected"
+		msg = "'MODULE Ident;' expected"
 		return (msg, None, None)
 
 astrobeCompileLPC2000 = lambda text, encodedText, encoding, fileName: astrobeCompile(text, encodedText, encoding, fileName, 0)
 astrobeCompileM3 = lambda text, encodedText, encoding, fileName: astrobeCompile(text, encodedText, encoding, fileName, 1)
 astrobeCompileM4 = lambda text, encodedText, encoding, fileName: astrobeCompile(text, encodedText, encoding, fileName, 2)
 
-def cCompile (text, encodedText, encoding, fileName):
-	assert type(text) is unicode
-	assert type(encodedText) is str
-	assert encoding != None
-	assert fileName != None # because compileSavedOnly
+def cCompile (text: str, encodedText: bytes, encoding: str, fileName: str):
+	assert type(text) is str
+	assert type(encodedText) is bytes
+	assert encoding is not None
+	assert fileName is not None # because compileSavedOnly
 
 	name = '.'.join(os.path.basename(fileName).split('.')[:-1])
 	try:
 		e, o = cmd(["make", name + '.o'])
-	except Exception, e:
+	except Exception as e:
 		msg = 'make: ' + exMsg(e)
 		return (msg, None, None)
 
-	msg = (e + o).decode( encoding )
+	e = e.decode(encoding)
+	o = o.decode(encoding)
+	msg = e + o
 
 	def add (m, link):
 		if m.startswith('warning:'):
@@ -710,7 +723,7 @@ def cCompile (text, encodedText, encoding, fileName):
 	warns = []
 	for l in e.split('\n'):
 		r = _pcLineCol.match(l + '\n')
-		if r != None:
+		if r is not None:
 			line = int(r.group(1)) - 1
 			col = int(r.group(2)) - 1
 			pos = (line, col)
@@ -719,7 +732,7 @@ def cCompile (text, encodedText, encoding, fileName):
 			add(m, link)
 		else:
 			r = _pcLine.match(l + '\n')
-			if r != None:
+			if r is not None:
 				line = int(r.group(1)) - 1
 				pos = (line, None)
 				link = (i, pos)
@@ -730,19 +743,21 @@ def cCompile (text, encodedText, encoding, fileName):
 
 _pGenieLineCol = re.compile('^([^:]+):([1-9][0-9]*)\.([1-9][0-9]*)-([1-9][0-9]*)\.([1-9][0-9]*): ([^\n]+)\n')
 
-def genieCompile (text, encodedText, encoding, fileName):
-	assert type(text) is unicode
-	assert type(encodedText) is str
-	assert encoding != None
-	assert fileName != None # because compileSavedOnly
+def genieCompile (text: str, encodedText: bytes, encoding: str, fileName: str):
+	assert type(text) is str
+	assert type(encodedText) is bytes
+	assert encoding is not None
+	assert fileName is not None # because compileSavedOnly
 
 	try:
 		e, o = cmd(["make"])
-	except Exception, e:
+	except Exception as e:
 		msg = 'make: ' + exMsg(e)
 		return (msg, None, None)
 
-	msg = (e + o).decode( encoding )
+	e = e.decode(encoding)
+	o = o.decode(encoding)
+	msg = e + o
 
 	def add (m, link):
 		if m.startswith('warning:'):
@@ -755,7 +770,7 @@ def genieCompile (text, encodedText, encoding, fileName):
 	warns = []
 	for l in e.split('\n'):
 		r = _pGenieLineCol.match(l + '\n')
-		if r != None:
+		if r is not None:
 			if sameFile(r.group(1), fileName):
 				line = int(r.group(2)) - 1
 				col = int(r.group(3)) - 1
@@ -769,20 +784,22 @@ def genieCompile (text, encodedText, encoding, fileName):
 
 _zcLineCol = re.compile("^([0-9]+): ([^\(]+)\(([0-9]+)\,([0-9]+)\): ([^\n]+)\n")
 
-def zcCompile (text, encodedText, encoding, fileName):
-	assert type(text) is unicode
-	assert type(encodedText) is str
-	assert encoding != None
-	assert fileName != None # because compileSavedOnly
+def zcCompile (text: str, encodedText: bytes, encoding: str, fileName: str):
+	assert type(text) is str
+	assert type(encodedText) is bytes
+	assert encoding is not None
+	assert fileName is not None # because compileSavedOnly
 
 	name = '.'.join(os.path.basename(fileName).split('.')[:-1])
 	try:
 		e, o = cmd(["make", name + '.compile'])
-	except Exception, e:
+	except Exception as e:
 		msg = 'make: ' + exMsg(e)
 		return (msg, None, None)
 
-	msg = (e + o).decode( encoding )
+	e = e.decode(encoding)
+	o = o.decode(encoding)
+	msg = e + o
 
 	eLines = e.count('\n')
 	errs = []
@@ -791,7 +808,7 @@ def zcCompile (text, encodedText, encoding, fileName):
 	for l in o.split('\n'):
 		l = l.rstrip() + '\n'
 		r = _zcLineCol.match(l)
-		if r:
+		if r is not None:
 			line = int(r.group(3)) - 1
 			col = int(r.group(4)) - 1
 			pos = (line, col)
@@ -806,20 +823,22 @@ def zcCompile (text, encodedText, encoding, fileName):
 # 304	14/3	CRC8.mpas	Syntax error: Expected "end" but "п" found
 _pmkpLineCol = re.compile("^(?:[0-9]+)\t([0-9]+)/([0-9]+)\t([^\t]+)\t([^\n]+)\n")
 
-def mikroPascalCompile (text, encodedText, encoding, fileName):
-	assert type(text) is unicode
-	assert type(encodedText) is str
-	assert encoding != None
-	assert fileName != None # because compileSavedOnly
+def mikroPascalCompile (text: str, encodedText: bytes, encoding: str, fileName: str):
+	assert type(text) is str
+	assert type(encodedText) is bytes
+	assert encoding is not None
+	assert fileName is not None # because compileSavedOnly
 
 	name = '.'.join(os.path.basename(fileName).split('.')[:-1])
 	try:
 		e, o = cmd(["make", "CURDIR=" + os.path.realpath(os.curdir), name + '.compile'])
-	except Exception, e:
+	except Exception as e:
 		msg = 'make: ' + exMsg(e)
 		return (msg, None, None)
 
-	msg = (e + o.replace('\xff', '')).decode( encoding )
+	e = e.decode(encoding)
+	o = o.replace(b'\xff', b'').decode(encoding)
+	msg = e + o
 
 	eLines = e.count('\n')
 	errs = []
@@ -827,7 +846,7 @@ def mikroPascalCompile (text, encodedText, encoding, fileName):
 	i = eLines
 	for l in o.split('\n'):
 		r = _pmkpLineCol.match(l + '\n')
-		if r and (r.group(3) == os.path.basename(fileName)):
+		if (r is not None) and (r.group(3) == os.path.basename(fileName)):
 			line = int(r.group(1)) - 1
 			col = int(r.group(2)) - 1
 			pos = (line, col)
@@ -842,27 +861,29 @@ def mikroPascalCompile (text, encodedText, encoding, fileName):
 
 _pmockaLineCol = re.compile("^([0-9]+)\,([0-9]+): ([^\n]+)\n")
 
-def mockaCompile (text, encodedText, encoding, fileName):
-	assert type(text) is unicode
-	assert type(encodedText) is str
-	assert encoding != None
-	assert fileName != None # because compileSavedOnly
+def mockaCompile (text: str, encodedText: bytes, encoding: str, fileName: str):
+	assert type(text) is str
+	assert type(encodedText) is bytes
+	assert encoding is not None
+	assert fileName is not None # because compileSavedOnly
 
 	name = '.'.join(os.path.basename(fileName).split('.')[:-1])
 	try:
 		e, o = cmd(["mocka", "-c", name])
-	except Exception, e:
+	except Exception as e:
 		msg = 'mocka: ' + exMsg(e)
 		return (msg, None, None)
 
-	msg = (e + o).decode( encoding )
+	e = e.decode(encoding)
+	o = o.decode(encoding)
+	msg = e + o
 
 	eLines = e.count('\n')
 	errs = []
 	i = eLines
 	for l in o.split('\n'):
 		r = _pmockaLineCol.match(l + '\n')
-		if r:
+		if r is not None:
 			line = int(r.group(1)) - 1
 			col = int(r.group(2)) - 1
 			pos = (line, col)
@@ -873,19 +894,21 @@ def mockaCompile (text, encodedText, encoding, fileName):
 
 _pobcLine = re.compile("^\"([^\"]+)\"\, line ([0-9]+): ([^\n]+)\n")
 
-def obcCompile (text, encodedText, encoding, fileName):
-	assert type(text) is unicode
-	assert type(encodedText) is str
-	assert encoding != None
-	assert fileName != None # because compileSavedOnly
+def obcCompile (text: str, encodedText: bytes, encoding: str, fileName: str):
+	assert type(text) is str
+	assert type(encodedText) is bytes
+	assert encoding is not None
+	assert fileName is not None # because compileSavedOnly
 
 	try:
 		e, o = cmd(["obc", "-c", fileName])
-	except Exception, e:
+	except Exception as e:
 		msg = 'obc: ' + exMsg(e)
 		return (msg, None, None)
 
-	msg = (e + o).decode( encoding )
+	e = e.decode(encoding)
+	o = o.decode(encoding)
+	msg = e + o
 
 	errs = []
 	warns = []
@@ -902,7 +925,7 @@ def obcCompile (text, encodedText, encoding, fileName):
 			if l.startswith('>'):
 				st = 0
 				r = _pobcLine.match(' '.join(ll) + '\n')
-				if r:
+				if r is not None:
 					fName = r.group(1)
 					# assert fName == fileName
 					line = int(r.group(2)) - 1
@@ -922,18 +945,17 @@ def obcCompile (text, encodedText, encoding, fileName):
 
 _pxcLineCol = re.compile('\* \[([^ ]+) ([0-9]+)\.([0-9]+) [A-Z][0-9]+\]\n')
 
-# fileName may be None
-def xcmCompile (xCmd, text, encodedText, encoding, fileName, suffix):
-	assert type(text) is unicode
-	assert type(encodedText) is str
-	assert encoding != None
+def xcmCompile (xCmd: str, text: str, encodedText: bytes, encoding: str, fileName: str | None, suffix: str):
+	assert type(text) is str
+	assert type(encodedText) is bytes
+	assert encoding is not None
 
 	fd, name = tempfile.mkstemp(suffix=suffix)
 	try:
 		try:
 			try:
 				os.write(fd, encodedText.replace('\t', ' '))
-			except Exception, e:
+			except Exception as e:
 				msg = tr('#File write error') + ': ' + exMsg(e)
 				return (msg, None, None)
 		finally:
@@ -943,7 +965,7 @@ def xcmCompile (xCmd, text, encodedText, encoding, fileName, suffix):
 				pass
 		try:
 			e, o = cmd([xCmd, "=compile", name, '+CHANGESYM'])
-		except Exception, e:
+		except Exception as e:
 			msg = xCmd + ': ' + exMsg(e)
 			return (msg, None, None)
 	finally:
@@ -952,14 +974,16 @@ def xcmCompile (xCmd, text, encodedText, encoding, fileName, suffix):
 		except:
 			pass
 
-	msg = (e + o).decode( encoding )
+	e = e.decode(encoding)
+	o = o.decode(encoding)
+	msg = e + o
 
 	eLines = e.count('\n')
 	errs = []
 	i = eLines
 	for l in o.split('\n'):
 		r = _pxcLineCol.match(l + '\n')
-		if r:
+		if r is not None:
 			if r.group(1) == name:
 				line = int(r.group(2)) - 1
 				col = int(r.group(3)) - 1
@@ -981,100 +1005,120 @@ def xmCompileM2 (text, encodedText, encoding, fileName):
 def xmCompileO2 (text, encodedText, encoding, fileName):
 	return xcmCompile('xm', text, encodedText, encoding, fileName, '.ob2')
 
-pyNormalizeNewlines = lambda encodedText: encodedText.replace('\r\n', '\n').replace('\r', '\n')
+pyNormalizeNewlinesStr = lambda text: text.replace('\r\n', '\n').replace('\r', '\n')
+pyNormalizeNewlinesBytes = lambda encodedText: encodedText.replace(b'\r\n', b'\n').replace(b'\r', b'\n')
 
-# fileName may be None
-def pyCompile (text, encodedText, encoding, fileName):
-	assert type(text) is unicode
-	assert type(encodedText) is str
-	assert encoding == None
+def pyCompile (text: str, encodedText: bytes, encoding: None, fileName: str | None):
+	assert type(text) is str
+	assert type(encodedText) is bytes
+	assert encoding is None
 
 	try:
-		compiler.compile(
-			pyNormalizeNewlines(encodedText),
+		compile(
+			pyNormalizeNewlinesBytes(encodedText),
 			'', 'exec')
-	except SyntaxError, e:
-		msg = e.msg.decode(locale.getpreferredencoding())
+	except SyntaxError as e:
+		msg = e.msg
 		pos = ( e.lineno - 1, e.offset - 1 )
 		link = (0, pos)
 		return (msg, ( link, ), None)
 	else:
-		return (u'', None, None) # ok
+		return ('', None, None) # ok
 
 # see http://docs.python.org/reference/lexical_analysis.html#encoding-declarations
-_cP = re.compile('^[^#]*#.*coding[=:]\s*([-\w.]+)')
+_cPb = re.compile(b'^[^#]*#.*coding[=:]\s*([-\w.]+)')
+_cPs = re.compile('^[^#]*#.*coding[=:]\s*([-\w.]+)')
 
-def pyCoding (x):
-	for line in pyNormalizeNewlines(x).split('\n')[:2]:
-		r = _cP.match(line)
-		if r != None:
-			encoding = r.group(1)
-			if Trace: print 'pyCoding:', encoding
-			try:
-				x = ''.decode(encoding)
-			except LookupError:
-				print 'invalid encoding:', repr(encoding)
-				return None
-			else:
-				return encoding
+def pyCoding (x) -> str | None:
+	assert type(x) in (str, bytes)
+
+	if type(x) is bytes:
+		for line in pyNormalizeNewlinesBytes(x).split(b'\n')[:2]:
+			r = _cPb.match(line)
+			if r is not None:
+				encoding = r.group(1).decode('ascii')
+				if Trace: print('pyCoding:', encoding)
+				try:
+					x = b''.decode(encoding)
+				except LookupError:
+					print('invalid encoding:', repr(encoding))
+					return None
+				else:
+					return encoding
+		else:
+			return None
 	else:
-		return None
+		for line in pyNormalizeNewlinesStr(x).split('\n')[:2]:
+			r = _cPs.match(line)
+			if r is not None:
+				encoding = r.group(1)
+				if Trace: print('pyCoding:', encoding)
+				try:
+					x = b''.decode(encoding)
+				except LookupError:
+					print('invalid encoding:', repr(encoding))
+					return None
+				else:
+					return encoding
+		else:
+			return None
 
-def pyImport (encodedText):
-	assert type(encodedText) is str
+def pyImport (encodedText: bytes) -> str:
+	assert type(encodedText) is bytes
 
 	encoding = pyCoding(encodedText)
-	if encoding == None:
-		if encodedText.startswith('\xef\xbb\xbf'):
+	if encoding is None:
+		if encodedText.startswith(b'\xef\xbb\xbf'):
 			encodedText = encodedText[3:]
 			encoding = 'utf-8'
 		else:
-			# вообще должна быть ascii
-			encoding = locale.getpreferredencoding()
+			# encoding = locale.getpreferredencoding()
+			encoding = 'utf-8'
 
-	if Trace: print 'pyImportEncoding:', encoding
+	if Trace: print('pyImportEncoding:', encoding)
 	return encodedText.decode(encoding)
 
-def pyExport (text):
-	assert type(text) is unicode
+def pyExport (text: str) -> bytes:
+	assert type(text) is str
 
 	encoding = pyCoding(text)
-	if encoding == None:
+	if encoding is None:
 		try:
 			x = text.encode('ascii')
 		except UnicodeEncodeError:
-			if Trace: print 'pyExportEncoding: utf-8'
-			return '\xef\xbb\xbf' + text.encode('utf-8')
+			if Trace: print('pyExportEncoding: utf-8')
+			return b'\xef\xbb\xbf' + text.encode('utf-8')
 		else:
-			if Trace: print 'pyExportEncoding: ascii'
+			if Trace: print('pyExportEncoding: ascii')
 			return x
 	else:
-		if Trace: print 'pyExportEncoding:', encoding
+		if Trace: print('pyExportEncoding:', encoding)
 		return text.encode(encoding)
 
 _pLuaLine = re.compile('^luac-(?:[1-9][0-9\.]*): stdin:([1-9][0-9]*): ([^\n]+)\n')
 
-# fileName may be None
-def luaCompile (text, encodedText, encoding, fileName):
-	assert type(text) is unicode
-	assert type(encodedText) is str
-	assert encoding != None
+def luaCompile (text: str, encodedText: bytes, encoding: str, fileName: str | None):
+	assert type(text) is str
+	assert type(encodedText) is bytes
+	assert encoding is not None
 
 	args = ["luac-5.1", "-p", "-"]
 
 	close_fds = not mswindows
 	try:
 		p = subprocess.Popen(args, bufsize=8192, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, close_fds=close_fds)
-	except Exception, e:
+	except Exception as e:
 		msg = 'luac-5.1: ' + exMsg(e)
 		return (msg, None, None)
 
 	o, e = p.communicate(encodedText)
 
-	msg = e.decode( encoding ) + o
+	e = e.decode(encoding)
+	o = o.decode(encoding)
+	msg = e + o
 
 	r = _pLuaLine.match(e)
-	if r:
+	if r is not None:
 		line = int(r.group(1)) - 1
 		pos = (line, None)
 		link = (0, pos)
@@ -1082,29 +1126,26 @@ def luaCompile (text, encodedText, encoding, fileName):
 	else:
 		return (msg, None, None)
 
-# fileName may be None
-def umbrielCompile (text, encodedText, encoding, fileName):
-	assert type(text) is unicode
-	assert type(encodedText) is str
-	assert encoding != None
+def umbrielCompile (text: str, encodedText: bytes, encoding: str, fileName: str | None):
+	assert type(text) is str
+	assert type(encodedText) is bytes
+	assert encoding is not None
 
 	return cocodrivers.toCompileResult( cocodrivers.Umbriel.Process(text) )
 
-# fileName may be None
-def oberon0Compile (text, encodedText, encoding, fileName):
-	assert type(text) is unicode
-	assert type(encodedText) is str
-	assert encoding != None
+def oberon0Compile (text: str, encodedText: bytes, encoding: str, fileName: str | None):
+	assert type(text) is str
+	assert type(encodedText) is bytes
+	assert encoding is not None
 
 	return cocodrivers.toCompileResult( cocodrivers.Oberon0.Process(text) )
 
 _ppyCocoLineCol = re.compile("^file ([^ ]+) : \(([0-9]+), ([0-9]+)\) (.+)$")
 
-# fileName may be None
-def pyCocoCompile (text, encodedText, encoding, fileName):
-	assert type(text) is unicode
-	assert type(encodedText) is str
-	assert encoding != None
+def pyCocoCompile (text: str, encodedText: bytes, encoding: str, fileName: str | None):
+	assert type(text) is str
+	assert type(encodedText) is bytes
+	assert encoding is not None
 
 	xCmd = "cocopy"
 	# cocopy requirements: atg file must be in current directory
@@ -1115,7 +1156,7 @@ def pyCocoCompile (text, encodedText, encoding, fileName):
 		try:
 			try:
 				os.write(fd, encodedText)
-			except Exception, e:
+			except Exception as e:
 				msg = tr('#File write error') + ': ' + exMsg(e)
 				return (msg, None, None)
 		finally:
@@ -1125,7 +1166,7 @@ def pyCocoCompile (text, encodedText, encoding, fileName):
 				pass
 		try:
 			e, o = cmd([xCmd, "-t", bName])
-		except Exception, e:
+		except Exception as e:
 			msg = xCmd + ': ' + exMsg(e)
 			return (msg, None, None)
 	finally:
@@ -1134,20 +1175,23 @@ def pyCocoCompile (text, encodedText, encoding, fileName):
 		except:
 			pass
 
+	e = e.decode(encoding)
+	o = o.decode(encoding)
+
 	eLines = e.count('\n')
 	errs = []
 	warns = []
 	i = eLines
-	msg = [ e.decode(encoding) ]
+	msg = [ e ]
 	for line in o.split('\n'):
 		r = _ppyCocoLineCol.match(line)
-		if r and (r.group(1) == bName):
+		if (r is not None) and (r.group(1) == bName):
 			line = int(r.group(2)) - 1
 			col = int(r.group(3)) - 1
 			pos = (line, col)
 			link = (i, pos)
 			errs.append(link)
-			msg.append( "%s\n" % (r.group(4).decode(encoding),) )
+			msg.append( "%s\n" % (r.group(4),) )
 		else:
 			msg.append(line + '\n')
 		i = i + 1
@@ -1155,22 +1199,24 @@ def pyCocoCompile (text, encodedText, encoding, fileName):
 
 _pocamlLineCol = re.compile("^File \"([^\"]+)\"\, line ([0-9]+), characters ([0-9]+)\-([0-9]+):\n")
 
-def ocamlCompile (text, encodedText, encoding, fileName):
-	assert type(text) is unicode
-	assert type(encodedText) is str
-	assert encoding != None
-	assert fileName != None # because compileSavedOnly
+def ocamlCompile (text: str, encodedText: bytes, encoding: str, fileName: str):
+	assert type(text) is str
+	assert type(encodedText) is bytes
+	assert encoding is not None
+	assert fileName is not None # because compileSavedOnly
 
 	try:
 		e, o = cmd(["ocamlc", "-c", fileName])
-	except Exception, e:
+	except Exception as e:
 		msg = 'ocamlc: ' + exMsg(e)
 		return (msg, None, None)
 
-	msg = (e + o).decode( encoding )
+	e = e.decode(encoding)
+	o = o.decode(encoding)
+	msg = e + o
 
 	r = _pocamlLineCol.match(e)
-	if r:
+	if r is not None:
 		line = int(r.group(2)) - 1
 		col = int(r.group(3)) - 1
 		pos = (line, col)
@@ -1179,48 +1225,48 @@ def ocamlCompile (text, encodedText, encoding, fileName):
 	else:
 		return (msg, None, None)
 
-# fileName may be None
-def iverilogCompile (text, encodedText, encoding, fileName):
-	assert type(text) is unicode
-	assert type(encodedText) is str
-	assert encoding != None
+def iverilogCompile (text: str, encodedText: bytes, encoding: str, fileName: str | None):
+	assert type(text) is str
+	assert type(encodedText) is bytes
+	assert encoding is not None
 
 	# TODO
 
-	return (u'not implemented', None, None)
+	return ('not implemented', None, None)
 
-# fileName may be None
-def gvhdlCompile (text, encodedText, encoding, fileName):
-	assert type(text) is unicode
-	assert type(encodedText) is str
-	assert encoding != None
+def gvhdlCompile (text: str, encodedText: bytes, encoding: str, fileName: str | None):
+	assert type(text) is str
+	assert type(encodedText) is bytes
+	assert encoding is not None
 
 	# TODO
 
-	return (u'not implemented', None, None)
+	return ('not implemented', None, None)
 
 #_ppdflatexLine = re.compile("^([^:]+):([0-9]+): (.+)\.$")
 #
-#def latexCompile (text, encodedText, encoding, fileName):
-#	assert type(text) is unicode
-#	assert type(encodedText) is str
-#	assert encoding != None
-#	assert fileName != None # because compileSavedOnly
+#def latexCompile (text: str, encodedText: bytes, encoding: str, fileName: str):
+#	assert type(text) is str
+#	assert type(encodedText) is bytes
+#	assert encoding is not None
+#	assert fileName is not None # because compileSavedOnly
 #
 #	try:
 #		e, o = cmd(["pdflatex", "-file-line-error", "-interaction", "nonstopmode", fileName])
-#	except Exception, e:
+#	except Exception as e:
 #		msg = "pdflatex: " + exMsg(e)
 #		return (msg, None, None)
 #
-#	msg = (e + o).decode( encoding )
+#	e = e.decode(encoding)
+#	o = o.decode(encoding)
+#	msg = e + o
 #
 #	warns = []
 #	errs = []
 #	i = 0
 #	for line in msg.split('\n'):
 #		r = _ppdflatexLine.match(line)
-#		if r:
+#		if r is not None:
 #			line = int(r.group(2)) - 1
 #			pos = (line, 0)
 #			link = (i, pos)
@@ -1235,45 +1281,45 @@ def winEncoding ():
 		return winenc.getByLocale( locale.getdefaultlocale()[0] )
 
 def modObEmpty (name):
-	if name == None:
-		text = u'MODULE ;\n\n\t(*\n\t\t\n\t*)\n\n\t\n\nEND .\n'
+	if name is None:
+		text = 'MODULE ;\n\n\t(*\n\t\t\n\t*)\n\n\t\n\nEND .\n'
 		line = 0
 		col = 7
 	else:
-		text = u'MODULE %s;\n\n\t(*\n\t\t\n\t*)\n\n\t\n\nEND %s.\n' % (name, name)
+		text = 'MODULE %s;\n\n\t(*\n\t\t\n\t*)\n\n\t\n\nEND %s.\n' % (name, name)
 		line = 3
 		col = 2
 	return (text, line, col)
 
 def cocoPyAtgEmpty (name):
-	if name == None:
-		text = u'COMPILER \n\n\t/*\n\t\t\n\t*/\n\nCHARACTERS\n\nTOKENS\n\nCOMMENTS\n\tFROM  TO \n\nIGNORE\n\nPRODUCTIONS\n\n\t =  .\n\nEND .'
+	if name is None:
+		text = 'COMPILER \n\n\t/*\n\t\t\n\t*/\n\nCHARACTERS\n\nTOKENS\n\nCOMMENTS\n\tFROM  TO \n\nIGNORE\n\nPRODUCTIONS\n\n\t =  .\n\nEND .'
 		line = 0
 		col = 9
 	else:
-		text = u'COMPILER %s\n\n\t/*\n\t\t\n\t*/\n\nCHARACTERS\n\nTOKENS\n\nCOMMENTS\n\tFROM  TO \n\nIGNORE\n\nPRODUCTIONS\n\n\t%s =  .\n\nEND %s.' % (name, name, name)
+		text = 'COMPILER %s\n\n\t/*\n\t\t\n\t*/\n\nCHARACTERS\n\nTOKENS\n\nCOMMENTS\n\tFROM  TO \n\nIGNORE\n\nPRODUCTIONS\n\n\t%s =  .\n\nEND %s.' % (name, name, name)
 		line = 3
 		col = 2
 	return (text, line, col)
 
 def modZnEmpty (name):
-	if name == None:
-		text = u'module ;\n\nend .'
+	if name is None:
+		text = 'module ;\n\nend .'
 		line = 0
 		col = 7
 	else:
-		text = u'module %s;\n\n\n\nend %s.' % (name, name)
+		text = 'module %s;\n\n\n\nend %s.' % (name, name)
 		line = 2
 		col = 0
 	return (text, line, col)
 
 def delphiEmpty (name):
-	if name == None:
-		text = u'unit ;\n\n(*\n\t\n*)\n\n(* {$OVERFLOWCHECKS ON} *)\n{$RANGECHECKS ON}\n\ninterface\n\n\n\nimplementation\n\n\n\nend.'
+	if name is None:
+		text = 'unit ;\n\n(*\n\t\n*)\n\n(* {$OVERFLOWCHECKS ON} *)\n{$RANGECHECKS ON}\n\ninterface\n\n\n\nimplementation\n\n\n\nend.'
 		line = 0
 		col = 5
 	else:
-		text = u'unit %s;\n\n(*\n\t\n*)\n\n(* {$OVERFLOWCHECKS ON} *)\n{$RANGECHECKS ON}\n\ninterface\n\n\n\nimplementation\n\n\n\nend (* %s *).' % (name, name)
+		text = 'unit %s;\n\n(*\n\t\n*)\n\n(* {$OVERFLOWCHECKS ON} *)\n{$RANGECHECKS ON}\n\ninterface\n\n\n\nimplementation\n\n\n\nend (* %s *).' % (name, name)
 		line = 3
 		col = 1
 	return (text, line, col)
@@ -1311,7 +1357,7 @@ c = {
 	'extensions': ('c',),
 	'compile': cCompile,
 	'compileSavedOnly': True, # because compile with make
-	'empty': (u'int main (int argc, char* argv[])\n{\n\t\n\n\treturn 0;\n}\n', 2, 1),
+	'empty': ('int main (int argc, char* argv[])\n{\n\t\n\n\treturn 0;\n}\n', 2, 1),
 }
 
 cxx = {
@@ -1377,7 +1423,7 @@ python = {
 	'compile': pyCompile,
 	'import': pyImport,
 	'export': pyExport,
-	'empty': (u"#! /usr/bin/env python\n# -*- coding: %s -*-\n\ndef main ():\n\t\n\nif __name__ == '__main__':\n\tmain()\n" % (locale.getpreferredencoding().lower()), 0, 22),
+	'empty': ("#! /usr/bin/env python\n# -*- coding: %s -*-\n\ndef main ():\n\t\n\nif __name__ == '__main__':\n\tmain()\n" % (locale.getpreferredencoding().lower()), 0, 22),
 	'sharpComments': True,
 }
 
@@ -1580,7 +1626,7 @@ profiles = (
 )
 
 def test ():
-	print cmdPollOnly(['winepath', '-w', '111'])
+	print(cmdPollOnly(['winepath', '-w', '111']))
 
 if __name__ == '__main__':
 	test()

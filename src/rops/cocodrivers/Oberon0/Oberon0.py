@@ -1,7 +1,7 @@
 # Alexander Shiryaev, 2011
 
-import Scanner
-import Parser
+from . import Scanner
+from . import Parser
 
 
 

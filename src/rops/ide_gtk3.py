@@ -1,12 +1,10 @@
-#! /usr/bin/env python2.7
-# -*- coding: utf-8 -*-
-# Alexander Shiryaev, 2010-2017
+#! /usr/bin/env python3
 #
-# IMPLEMENTATION NOTES:
-#	имена файлов храним в кодировке системы (locale.getpreferredlocale())
-#	текст Gtk.TextView храним в unicode
+# Alexander Shiryaev, 2010-2017, 2024
+#
 
 import gi
+import traceback
 
 gi.require_version('GObject', '2.0')
 from gi.repository import GObject
@@ -24,7 +22,10 @@ try:
 	gi.require_version('GtkSource', '3.0')
 	from gi.repository import GtkSource
 except ImportError:
-	print 'gtksourceview module not found => some features will be inaccessible!'
+	print('gtksourceview module not found => some features will be inaccessible!')
+	GTKSV = False
+except ValueError:
+	print('gtksourceview module not found => some features will be inaccessible!')
 	GTKSV = False
 else:
 	GTKSV = True
@@ -33,42 +34,35 @@ import os, sys, locale, codecs, re
 try:
 	import chardet
 except ImportError:
-	print 'chardet module not found => automatic encoding detection will not available!'
+	print('chardet module not found => automatic encoding detection will not available!')
 	CHARDET = False
 else:
 	CHARDET = True
 
-import profiles, util, curpos, store, textops
-from translate import tr, setLang as setTrLang
+from . import profiles, util, curpos, store, textops
+from .translate import tr, setLang as setTrLang
 
 Trace = True
 
 mswindows = sys.platform == 'win32'
 
 def fileNameToGtk (fileName):
-	assert type(fileName) is str # not unicode
-	if mswindows:
-		return fileName.decode(locale.getpreferredencoding()).encode('utf-8')
-	else:
-		return fileName
+	assert type(fileName) is str
+	return fileName
 
 def fileNameFromGtk (gtkFileName):
-	assert type(gtkFileName) is str # not unicode
-	if mswindows:
-		return gtkFileName.decode('utf-8').encode(locale.getpreferredencoding())
-	else:
-		return gtkFileName
+	assert type(gtkFileName) is str
+	return gtkFileName
 
-# return values: None | fileName
-def OpenFile (parent):
+def OpenFile (parent) -> str | None:
 	dialog = Gtk.FileChooserDialog(title=None,action=Gtk.FileChooserAction.OPEN,
 		buttons=(Gtk.STOCK_CANCEL,Gtk.ResponseType.CANCEL,Gtk.STOCK_OPEN,Gtk.ResponseType.OK))
 	dialog.set_transient_for(parent)
 	dialog.set_default_response(Gtk.ResponseType.OK)
-	dialog.set_title(tr('#Open file').encode('utf-8'))
+	dialog.set_title(tr('#Open file'))
 
 	fAll = Gtk.FileFilter()
-	fAll.set_name(tr('#All known').encode('utf-8'))
+	fAll.set_name(tr('#All known'))
 	fToProf = { fAll: None }
 	dialog.add_filter(fAll)
 	for prof in profiles.profiles:
@@ -85,9 +79,9 @@ def OpenFile (parent):
 	if resp == Gtk.ResponseType.OK:
 		fileName = fileNameFromGtk( dialog.get_filename() )
 		prof = fToProf[dialog.get_filter()]
-		if prof == None:
+		if prof is None:
 			prof = getProf(dialog, fileName)
-			if prof == None:
+			if prof is None:
 				res = None
 			else:
 				res = fileName, prof
@@ -102,12 +96,12 @@ def OpenFile (parent):
 
 	return res
 
-def SaveFile (parent, extensions):
+def SaveFile (parent, extensions) -> str | None:
 	dialog = Gtk.FileChooserDialog(title=None,action=Gtk.FileChooserAction.SAVE,
 		buttons=(Gtk.STOCK_CANCEL,Gtk.ResponseType.CANCEL,Gtk.STOCK_SAVE,Gtk.ResponseType.OK))
 	dialog.set_transient_for(parent)
 	dialog.set_default_response(Gtk.ResponseType.CANCEL)
-	dialog.set_title(tr('#Save file').encode('utf-8'))
+	dialog.set_title(tr('#Save file'))
 
 	fToPostfix = {}
 	for ext in extensions:
@@ -119,7 +113,7 @@ def SaveFile (parent, extensions):
 		fToPostfix[f] = '.' + ext
 
 	f = Gtk.FileFilter()
-	f.set_name(tr('#All files').encode('utf-8'))
+	f.set_name(tr('#All files'))
 	f.add_pattern('*')
 	dialog.add_filter(f)
 	fToPostfix[f] = ''
@@ -140,12 +134,12 @@ def SaveFile (parent, extensions):
 	return res
 
 # return values: 'YES' | 'NO' | 'CANCEL'
-def SaveRequest (parent):
+def SaveRequest (parent) -> str:
 	dialog = Gtk.MessageDialog(parent,
 		Gtk.DialogFlags.MODAL | Gtk.DialogFlags.DESTROY_WITH_PARENT,
 		Gtk.MessageType.QUESTION,
 		Gtk.ButtonsType.NONE,
-		("%s" % (tr("#Save changes?"),)).encode('utf-8')
+		("%s" % (tr("#Save changes?"),))
 	)
 	dialog.add_buttons(
 		Gtk.STOCK_YES, Gtk.ResponseType.YES,
@@ -161,16 +155,16 @@ def SaveRequest (parent):
 
 	return { Gtk.ResponseType.CANCEL: 'CANCEL', Gtk.ResponseType.YES: 'YES', Gtk.ResponseType.NO: 'NO', Gtk.ResponseType.DELETE_EVENT: 'CANCEL' }[resp]
 
-def CanOverwrite (parent, fileName):
+def CanOverwrite (parent, fileName: str) -> bool:
 	dialog = Gtk.MessageDialog(parent,
 		Gtk.DialogFlags.MODAL | Gtk.DialogFlags.DESTROY_WITH_PARENT,
 		Gtk.MessageType.WARNING,
 		Gtk.ButtonsType.NONE,
 		"%s\n%s\n%s. %s" % (
-			tr('#File').encode('utf-8'),
-			fileName.decode(locale.getpreferredencoding()).encode('utf-8'),
-			tr('#already exists').encode('utf-8'),
-			tr('#Overwrite file?').encode('utf-8')
+			tr('#File'),
+			fileName,
+			tr('#already exists'),
+			tr('#Overwrite file?')
 		)
 	)
 	dialog.add_buttons(
@@ -189,7 +183,7 @@ def CanOverwrite (parent, fileName):
 def getText (textView):
 	buffer = textView.get_buffer()
 	start, end = buffer.get_bounds()
-	text = buffer.get_text(start, end, False).decode('utf-8')
+	text = buffer.get_text(start, end, False)
 	return text
 
 def NewSrcTextView ():
@@ -209,8 +203,8 @@ def NewSrcTextSView ():
 
 normalizeEncoding = lambda enc: codecs.lookup(enc).name
 
-def decodeText (encodedText, encoding):
-	assert type(encodedText) is str
+def decodeText (encodedText: bytes, encoding: str):
+	assert type(encodedText) is bytes
 	try:
 		text = encodedText.decode(encoding)
 	except UnicodeError:
@@ -221,12 +215,12 @@ def decodeText (encodedText, encoding):
 		return text
 
 # return values: None | 'CANCEL' | text, encoding, autoDetected
-def importText (prof, encodedText, parent):
-	assert type(encodedText) is str # not unicode
+def importText (prof, encodedText: bytes, parent):
+	assert type(encodedText) is bytes
 
-	if prof.has_key('import'):
-		assert prof.has_key('export')
-		assert not prof.has_key('preferredFileEncoding')
+	if 'import' in prof:
+		assert 'export' in prof
+		assert 'preferredFileEncoding' not in prof
 
 		text = prof['import'](encodedText)
 		# знать кодировку при явном импорте в дальнейшем не нужно,
@@ -234,40 +228,40 @@ def importText (prof, encodedText, parent):
 		encoding = None
 		autoDetected = False
 	else:
-		if prof.has_key('preferredFileEncoding'):
-			assert not prof.has_key('export')
+		if 'preferredFileEncoding' in prof:
+			assert 'export' not in prof
 			preferredEncoding = prof['preferredFileEncoding']
 		else:
 			preferredEncoding = locale.getpreferredencoding()
 
-		if Trace: print 'preferredImportEncoding:', preferredEncoding
+		if Trace: print('preferredImportEncoding:', preferredEncoding)
 
 		text = decodeText(encodedText, preferredEncoding)
-		if text != None:
+		if text is not None:
 			preferredEncoding = normalizeEncoding(preferredEncoding)
 		else:
 			preferredEncoding = None
 
 		if CHARDET:
 			cd = chardet.detect(encodedText)
-			if Trace: print 'autoImportEncoding:', cd
+			if Trace: print('autoImportEncoding:', cd)
 			autoEncoding = cd['encoding']
-			if (autoEncoding != None) and (autoEncoding != 'ascii'):
+			if (autoEncoding is not None) and (autoEncoding != 'ascii'):
 				text1 = decodeText(encodedText, autoEncoding)
-				if text1 != None:
+				if text1 is not None:
 					autoEncoding = normalizeEncoding(autoEncoding)
 					if text == None:
 						text = text1
 					del text1
 				else:
-					if Trace: print 'decoding with autoImportEncoding failed'
+					if Trace: print('decoding with autoImportEncoding failed')
 					autoEncoding = None
 			else:
 				autoEncoding = None
 		else:
 			autoEncoding = None
 
-		if (preferredEncoding == None) and (autoEncoding == None):
+		if (preferredEncoding is None) and (autoEncoding == None):
 			return None # can not detect file encoding
 		elif preferredEncoding == None: # autoEncoding != None
 			encoding = autoEncoding
@@ -289,66 +283,66 @@ def importText (prof, encodedText, parent):
 				tr('#Name'),
 				items
 			)
-			if idx == None:
+			if idx is None:
 				return 'CANCEL'
 			else:
 				encoding = { 0: preferredEncoding, 1: autoEncoding }[idx]
 				text = encodedText.decode(encoding)
 				autoDetected = False
 
-		if Trace: print 'importEncoding:', encoding
+		if Trace: print('importEncoding:', encoding)
 
-	assert type(text) is unicode
+	assert type(text) is str
 	return text, encoding, autoDetected
 
 def exportText (mod, text):
-	assert type(text) is unicode
+	assert type(text) is str
 
 	prof = mod['profile']
 
-	if mod['importEncoding'] != None:
-		assert not prof.has_key('import')
-		assert not prof.has_key('export')
+	if mod['importEncoding'] is not None:
+		assert 'import' not in prof
+		assert 'export' not in prof
 
 		encoding = mod['importEncoding']
-		if Trace: print 'exportEncoding:', encoding, '(=importEncoding)'
+		if Trace: print('exportEncoding:', encoding, '(=importEncoding)')
 		encodedText = text.encode(encoding)
-	elif prof.has_key('export'): # expoprt function specified
-		assert prof.has_key('import')
-		assert not prof.has_key('preferredFileEncoding')
+	elif 'export' in prof: # expoprt function specified
+		assert 'import' in prof
+		assert 'preferredFileEncoding' not in prof
 
 		encodedText = prof['export'](text)
 		encoding = None
-	elif prof.has_key('preferredFileEncoding'): # preferred file encoding specified
-		assert not prof.has_key('import')
+	elif 'preferredFileEncoding' in prof: # preferred file encoding specified
+		assert 'import' not in prof
 
 		encoding = prof['preferredFileEncoding']
-		if Trace: print 'exportEncoding:', encoding
+		if Trace: print('exportEncoding:', encoding)
 		encodedText = text.encode(encoding)
 	else:
 		encoding = locale.getpreferredencoding()
-		if Trace: print 'exportEncoding:', encoding
+		if Trace: print('exportEncoding:', encoding)
 		encodedText = text.encode(encoding)
-	assert type(encodedText) is str # not unicode
+	assert type(encodedText) is bytes
 	return encodedText, encoding
 
 def setupBuffer (buffer, langName, styleNames):
 	if GTKSV:
 		sm = GtkSource.StyleSchemeManager.get_default()
-		if styleNames != None:
+		if styleNames is not None:
 			for styleName in styleNames:
 				style = sm.get_scheme(styleName)
-				if style != None:
+				if style is not None:
 					break
 			else:
 				style = None
 		else:
 			style = sm.get_scheme('classic')
 		if Trace:
-			if style != None:
-				print 'style-scheme:', style.get_name()
+			if style is not None:
+				print('style-scheme:', style.get_name())
 			else:
-				print 'no style-scheme'
+				print('no style-scheme')
 		buffer.set_property("style-scheme", style)
 
 		if langName != None:
@@ -357,32 +351,32 @@ def setupBuffer (buffer, langName, styleNames):
 		else:
 			lang = None
 		if Trace:
-			if lang != None:
-				print 'language:', lang.get_name()
+			if lang is not None:
+				print('language:', lang.get_name())
 			else:
-				print 'no language'
+				print('no language')
 		buffer.set_property("language", lang)
 
 # return values: None | profile
 def SelectProfile (parent, profiles):
 	items = []
 	for prof in profiles:
-		items.append( prof['name'].decode('ascii') )
+		items.append(prof['name'])
 	idx = SelectItem(parent, tr('#Select profile'), tr('#Name'), items)
-	if idx == None:
+	if idx is None:
 		return None
 	else:
 		return profiles[idx]
 
 def SelectItem (parent, title, name, items):
-	assert type(title) is unicode
-	assert type(name) is unicode
+	assert type(title) is str
+	assert type(name) is str
 
 	def on_tv_activate (widget, path, column):
-		if Trace: print 'tv activate'
+		if Trace: print('tv activate')
 		dialog.response(Gtk.ResponseType.OK)
 
-	dialog = Gtk.Dialog(title=title.encode('utf-8'), parent=parent,
+	dialog = Gtk.Dialog(title=title, parent=parent,
 		flags=Gtk.DialogFlags.MODAL | Gtk.DialogFlags.DESTROY_WITH_PARENT)
 	dialog.add_buttons(
 		Gtk.STOCK_OK, Gtk.ResponseType.OK,
@@ -398,10 +392,10 @@ def SelectItem (parent, title, name, items):
 	tv.set_model(listStore)
 
 	for item in items:
-		assert type(item) is unicode
-		listStore.append([item.encode('utf-8')])
+		assert type(item) is str
+		listStore.append([item])
 
-	col = Gtk.TreeViewColumn(name.encode('utf-8'))
+	col = Gtk.TreeViewColumn(name)
 	tv.append_column(col)
 
 	cell = Gtk.CellRendererText()
@@ -434,14 +428,15 @@ def SelectItem (parent, title, name, items):
 
 	return resp
 
-exMsg = lambda e: str(e).decode(locale.getpreferredencoding())
+# exMsg = lambda e: str(e)
+exMsg = lambda e: ''.join(traceback.format_exception(e))
 
 def doCompile (base):
 	text = getText(base.srcTextView)
 	text = normalizeLineSep(text, base.mod['lineSep'])
 	try:
 		encodedText, encoding = exportText(base.mod, text)
-	except Exception, e:
+	except Exception as e:
 		base.msg_set( tr('#Text convert error') + ': ' + exMsg(e) )
 		return
 
@@ -453,15 +448,15 @@ def doCompile (base):
 			bakFileName = os.tempnam(os.path.dirname(os.path.realpath(base.mod['fileName'])), os.path.basename(base.mod['fileName'] + '.'))
 			try:
 				os.rename(base.mod['fileName'], bakFileName)
-			except Exception, e:
-				print 'can not rename', base.mod['fileName'], 'to', bakFileName
+			except Exception as e:
+				print('can not rename', base.mod['fileName'], 'to', bakFileName)
 				msg = tr('#File rename error') + ': ' + exMsg(e)
 				base.msg_set(msg)
 				allow = False
 			else:
 				try:
 					util.writeFile(base.mod['fileName'], encodedText, sync=False)
-				except Exception, e:
+				except Exception as e:
 					try: # destination file must not exists on rename (Windows)
 						os.remove(base.mod['fileName'])
 					except:
@@ -469,7 +464,7 @@ def doCompile (base):
 					err = []
 					try:
 						os.rename(bakFileName, base.mod['fileName'])
-					except Exception, e1:
+					except Exception as e1:
 						msg2 = "%s (%s): %s" % (tr('#File rename error'), tr('#back'), exMsg(e1))
 						err.append(msg2)
 					msg1 = tr('#File write error') + ': ' + exMsg(e)
@@ -495,7 +490,7 @@ def doCompile (base):
 					pass
 				try:
 					os.rename(bakFileName, base.mod['fileName'])
-				except Exception, e:
+				except Exception as e:
 					msg1 = "%s (%s): %s" % (tr('#File rename error'), tr('#back'), exMsg(e))
 					base.msg_set(msg1)
 					return
@@ -521,10 +516,10 @@ def setCursorPos (textView, line, col):
 			it1 = it.copy()
 			it1.forward_to_line_end()
 			lineLen = it1.get_line_offset()
-			if Trace: print 'lineLen:', lineLen
+			if Trace: print('lineLen:', lineLen)
 			if col > lineLen:
 				col = lineLen
-				if Trace: print 'col:', col
+				if Trace: print('col:', col)
 			it.forward_chars(col)
 		buffer.place_cursor(it)
 
@@ -540,15 +535,15 @@ def saveCurPos (fileName, textView):
 	curpos.saveCurPos(fileName, line, col)
 
 def SelectFont (parent, old):
-	dialog = Gtk.FontSelectionDialog(tr('#Select font').encode('utf-8'))
+	dialog = Gtk.FontSelectionDialog(tr('#Select font'))
 	dialog.set_transient_for(parent)
 	if old != None:
 		r = dialog.set_font_name(old)
-		if Trace: print 'set font name:', r
+		if Trace: print('set font name:', r)
 	resp = dialog.run()
 	if resp == Gtk.ResponseType.OK:
 		new = dialog.get_font_name()
-		if Trace: print 'selected font:', new
+		if Trace: print('selected font:', new)
 	else:
 		new = old
 	dialog.destroy()
@@ -564,20 +559,20 @@ def translateBuilder (builder):
 		# делаем так, потому что при попытке получения свойств по крейней мере у SeparatorMenuItem он исчезает (где-то ошибка в Gtk или в PyGtk)
 		if type(obj) in (Gtk.Window, Gtk.MenuItem, Gtk.Label, Gtk.Button, Gtk.CheckButton):
 			if type(obj) is Gtk.Window:
-				label = obj.get_title().decode('utf-8')
+				label = obj.get_title()
 			else:
-				label = obj.get_property('label').decode('utf-8')
-			# print label
+				label = obj.get_property('label')
+			# print(label)
 			if label.startswith('#'):
-				label = tr(label.encode('ascii'))
+				label = tr(label)
 				if type(obj) is Gtk.Window:
-					obj.set_title(label.encode('utf-8'))
+					obj.set_title(label)
 				else:
-					obj.set_property("label", label.encode('utf-8'))
+					obj.set_property("label", label)
 		elif type(obj) in (Gtk.ImageMenuItem, Gtk.ScrolledWindow, Gtk.SeparatorMenuItem, Gtk.Box, Gtk.Paned, Gtk.MenuBar, Gtk.Statusbar, Gtk.Menu, Gtk.Entry, Gtk.Grid, Gtk.TreeView, Gtk.TreeSelection, Gtk.TextView):
 			pass
 		else:
-			print 'translateBuilder: not match type:', type(obj)
+			print('translateBuilder: not match type:', type(obj))
 
 # return values: '\n' | '\r\n' | '\r'
 def detectLineSep (text):
@@ -586,7 +581,7 @@ def detectLineSep (text):
 	rns = text.count('\r\n')
 	ns = ns - rns
 	rs = rs - rns
-	if Trace: print 'ns:', ns, 'rns:', rns, 'rs:', rs
+	if Trace: print('ns:', ns, 'rns:', rns, 'rs:', rs)
 	if (rns > ns) and (rns > rs):
 		return '\r\n'
 	elif (rs > ns) and (rs > rns):
@@ -607,14 +602,14 @@ normalizeLineSep = lambda text, lineSep: lineSep.join( splitToLines(text) )
 
 # return values: None | matchStartIter, matchEndIter
 def doFind (start, textToFindEncoded, backward, ignoreCase):
-	assert type(textToFindEncoded) is str # not unicode
+	assert type(textToFindEncoded) is str
 
 	if ignoreCase:
 		buffer = start.get_buffer()
-		textToFind = textToFindEncoded.decode('utf-8').lower()
+		textToFind = textToFindEncoded.lower()
 		if backward:
 			end = buffer.get_start_iter()
-			text = buffer.get_text(end, start, False).decode('utf-8').lower()
+			text = buffer.get_text(end, start, False).lower()
 			r = text.find(textToFind)
 			if r >= 0:
 				r1 = r
@@ -632,7 +627,7 @@ def doFind (start, textToFindEncoded, backward, ignoreCase):
 				found = False
 		else:
 			end = buffer.get_end_iter()
-			text = buffer.get_text(start, end, False).decode('utf-8').lower()
+			text = buffer.get_text(start, end, False).lower()
 			r = text.find(textToFind)
 			if r >= 0:
 				matchStart = start.copy()
@@ -650,7 +645,7 @@ def doFind (start, textToFindEncoded, backward, ignoreCase):
 	return found
 
 def doPrint (parent, textView, fileName):
-	assert type(fileName) is unicode
+	assert type(fileName) is str
 
 	def on_begin_print (operation, context, compositor):
 		while not compositor.paginate(context):
@@ -670,7 +665,7 @@ def doPrint (parent, textView, fileName):
 		compositor.set_highlight_syntax(True)
 		# compositor.set_print_line_numbers(5)
 
-		if fileName == u'':
+		if fileName == '':
 			compositor.set_print_header(False)
 			compositor.set_print_footer(False)
 		else:
@@ -691,20 +686,20 @@ def doPrint (parent, textView, fileName):
 		#else:
 		#	if Trace: 'print ok'
 	else: # not GTKSV
-		print 'gtksourceview module required for printing'
+		print('gtksourceview module required for printing')
 
 class Application:
 
 ################################## Find window ################################
 
 	def on_window2_delete_event (self, widget, data=None):
-		if Trace: print 'find window delete event'
+		if Trace: print('find window delete event')
 		self.on_button6_clicked(widget)
 		# return True
 		return widget.hide_on_delete()
 
 	def on_menuitem11_activate (self, widget, data=None):
-		if Trace: print 'find'
+		if Trace: print('find')
 		self.findWindow.show()
 		self.findStr.select_region(0, -1) # select all
 		self.findStr.grab_focus()
@@ -712,16 +707,16 @@ class Application:
 
 	def do_find (self, start, backward):
 		textToFindEncoded = self.findStr.get_text()
-		if Trace: print 'textToFind:', textToFindEncoded.decode('utf-8').encode(locale.getpreferredencoding())
+		if Trace: print('textToFind:', textToFindEncoded.encode(locale.getpreferredencoding()))
 
 		if textToFindEncoded != '':
 			ignoreCase = self.findIgnCase.get_active()
-			if Trace: print 'ignoreCase:', ignoreCase
+			if Trace: print('ignoreCase:', ignoreCase)
 
 			found = doFind(start, textToFindEncoded, backward, ignoreCase)
 
 			if found:
-				if Trace: print 'found'
+				if Trace: print('found')
 				matchStart, matchEnd = found
 
 				buffer = self.srcTextView.get_buffer()
@@ -738,7 +733,7 @@ class Application:
 			return None
 
 	def on_button1_clicked (self, widget, data=None):
-		if Trace: print 'find first'
+		if Trace: print('find first')
 
 		start = self.srcTextView.get_buffer().get_start_iter()
 		r = self.do_find(start, False)
@@ -755,13 +750,13 @@ class Application:
 		return self.do_find(it, backward)
 
 	def on_button2_clicked (self, widget, data=None):
-		if Trace: print 'find next'
+		if Trace: print('find next')
 		r = self.find_next()
 
 	def do_replace (self):
 		textToReplEncoded = self.findReplStr.get_text()
-		textToReplLen = len(textToReplEncoded.decode('utf-8'))
-		if Trace: print 'textToReplace:', textToReplEncoded.decode('utf-8').encode(locale.getpreferredencoding())
+		textToReplLen = len(textToReplEncoded)
+		if Trace: print('textToReplace:', textToReplEncoded.encode(locale.getpreferredencoding()))
 
 		r = self.srcTextView.get_buffer().get_selection_bounds()
 		if r != ():
@@ -784,18 +779,18 @@ class Application:
 			return None
 
 	def on_button3_clicked (self, widget, data=None):
-		if Trace: print 'replace'
+		if Trace: print('replace')
 
 		r = self.do_replace()
 
 	def on_button4_clicked (self, widget, data=None):
-		if Trace: print 'find and replace'
+		if Trace: print('find and replace')
 
 		if self.find_next() != None:
 			r = self.do_replace()
 
 	def on_button5_clicked (self, widget, data=None):
-		if Trace: print 'replace all'
+		if Trace: print('replace all')
 
 		it = self.srcTextView.get_buffer().get_start_iter()
 		found = self.do_find(it, False)
@@ -805,18 +800,18 @@ class Application:
 			start, end = self.do_replace()
 			cnt = cnt + 1
 			found = self.do_find(end, False)
-		if Trace: print cnt, 'replacements done'
+		if Trace: print(cnt, 'replacements done')
 
 	def on_button6_clicked (self, widget, data=None):
-		if Trace: print 'close'
+		if Trace: print('close')
 		self.findWindow.hide()
 
 	def on_entry1_activate (self, widget, data=None):
-		if Trace: print 'findStr entry activate'
+		if Trace: print('findStr entry activate')
 		self.on_button2_clicked(widget)
 
 	def on_entry1_key_press_event (self, widget, event):
-		# if Trace: print 'on find entry key press:', event
+		# if Trace: print('on find entry key press:', event)
 		if event.keyval == Gdk.KEY_Tab:
 			# вставляем символ TAB вместо смены фокуса
 			pos = widget.get_position()
@@ -825,7 +820,7 @@ class Application:
 			return True
 
 	def on_entry2_key_press_event (self, widget, event):
-		# if Trace: print 'on replace entry key press:', event
+		# if Trace: print('on replace entry key press:', event)
 		if event.keyval == Gdk.KEY_Tab:
 			# вставляем символ TAB вместо смены фокуса
 			pos = widget.get_position()
@@ -834,7 +829,7 @@ class Application:
 			return True
 
 	def on_window2_key_press_event (self, widget, event):
-		# if Trace: print 'on findwin key press:', event
+		# if Trace: print('on findwin key press:', event)
 		if event.keyval == Gdk.KEY_Escape:
 			self.on_button6_clicked(widget)
 			return True
@@ -850,7 +845,7 @@ class Application:
 
 		try:
 			encodedText, encoding = exportText(self.mod, text)
-		except Exception, e:
+		except Exception as e:
 			self.msg_set( tr('#Text convert error') + ': ' + exMsg(e) )
 			return
 
@@ -866,7 +861,7 @@ class Application:
 
 		try:
 			util.writeFile( fileName, encodedText, sync=True )
-		except Exception, e:
+		except Exception as e:
 			self.msg_set( tr('#File write error') + ': ' + exMsg(e) )
 			return False
 		else:
@@ -887,7 +882,7 @@ class Application:
 		modified = self.srcTextView.get_buffer().get_modified()
 		if modified:
 			yesNoCancel = SaveRequest(self.mainWindow)
-			if Trace: print yesNoCancel
+			if Trace: print(yesNoCancel)
 			if yesNoCancel == 'YES':
 				return self.do_save()
 			elif yesNoCancel == 'NO':
@@ -900,14 +895,14 @@ class Application:
 			return True
 
 	def modified_changed (self):
-		if Trace: print 'modified:', self.mod['modified']
+		if Trace: print('modified:', self.mod['modified'])
 		if self.mod['fileName'] == None:
 			t = tr('#untitled')
 		else:
-			t = self.mod['fileName'].decode(locale.getpreferredencoding())
+			t = self.mod['fileName']
 		if self.mod['modified']:
 			t = t + '*'
-		self.mainWindow.set_title("(%s) %s".encode('utf-8') % (self.mod['profile']['name'], t))
+		self.mainWindow.set_title("(%s) %s" % (self.mod['profile']['name'], t))
 
 	def do_new (self, prof=None, fileName=None):
 		# assert not modified
@@ -926,13 +921,13 @@ class Application:
 					if fileName == None:
 						name = None
 					else:
-						name = '.'.join(os.path.basename(fileName).split('.')[:-1]).decode(locale.getpreferredencoding())
+						name = '.'.join(os.path.basename(fileName).split('.')[:-1])
 					text, line, col = new(name)
 
 				if GTKSV:
 					buffer.begin_not_undoable_action()
-				assert type(text) is unicode
-				buffer.set_text(text.encode('utf-8'))
+				assert type(text) is str
+				buffer.set_text(text)
 				if GTKSV:
 					buffer.end_not_undoable_action()
 				it = buffer.get_iter_at_line_offset(line, col)
@@ -947,7 +942,7 @@ class Application:
 
 			lineSep = prof.get('lineSep', '\n')
 			assert lineSep in ('\n', '\r\n', '\r')
-			if Trace: print 'lineSep:', repr(lineSep)
+			if Trace: print('lineSep:', repr(lineSep))
 
 			self.mod = {
 				'fileName': fileName,
@@ -957,7 +952,7 @@ class Application:
 				'lineSep': lineSep
 			}
 			self.modified_changed()
-			self.msg_set(u'')
+			self.msg_set('')
 
 			if prof.get('sharpComments', False):
 				self.miSharpComment.set_property('visible', True)
@@ -967,19 +962,19 @@ class Application:
 				self.miSharpUnComment.set_property('visible', False)
 
 	def on_new (self, widget, data=None):
-		if Trace: print 'new'
+		if Trace: print('new')
 		if self.check_save():
 			if self.mod['fileName'] != None:
 				saveCurPos(self.mod['fileName'], self.srcTextView)
 			self.do_new()
 
 	def on_window1_delete_event (self, widget, data=None):
-		if Trace: print 'mainwin delete event'
+		if Trace: print('mainwin delete event')
 		canClose = self.check_save()
 		return not canClose
 
 	def on_window1_destroy (self, widget, data=None):
-		if Trace: print 'mainwin destroy'
+		if Trace: print('mainwin destroy')
 
 		if self.mod['fileName'] != None:
 			saveCurPos(self.mod['fileName'], self.srcTextView)
@@ -993,7 +988,7 @@ class Application:
 		Gtk.main_quit()
 
 	def on_quit (self, widget, data=None):
-		if Trace: print 'on quit'
+		if Trace: print('on quit')
 		if self.check_save():
 			self.mainWindow.destroy()
 
@@ -1002,7 +997,7 @@ class Application:
 
 		try:
 			encodedText = util.readFile(fileName)
-		except Exception, e:
+		except Exception as e:
 			self.msg_set( tr('#File read error') + ': ' + exMsg(e) )
 		else:
 			r = importText(prof, encodedText, self.mainWindow)
@@ -1017,7 +1012,7 @@ class Application:
 				setupBuffer(buffer, prof.get('lang'), prof.get('style'))
 				if GTKSV:
 					buffer.begin_not_undoable_action()
-				buffer.set_text( text.encode('utf-8') )
+				buffer.set_text(text)
 				if GTKSV:
 					buffer.end_not_undoable_action()
 				buffer.set_modified(False)
@@ -1026,7 +1021,7 @@ class Application:
 				if lineSep == None:
 					lineSep = detectLineSep(text)
 				assert lineSep in ('\n', '\r\n', '\r')
-				if Trace: print 'lineSep:', repr(lineSep)
+				if Trace: print('lineSep:', repr(lineSep))
 
 				self.mod = {
 					'fileName': fileName,
@@ -1040,7 +1035,7 @@ class Application:
 					msg = '%s: %s: %s' % (tr('#WARNING'), tr('#file encoding was detected automatically'), encoding)
 					self.msg_set(msg)
 				else:
-					self.msg_set(u'')
+					self.msg_set('')
 
 				if prof.get('sharpComments', False):
 					self.miSharpComment.set_property('visible', True)
@@ -1052,36 +1047,36 @@ class Application:
 				restoreCurPos(fileName, self.srcTextView)
 
 	def on_open (self, widget, data=None):
-		if Trace: print 'open'
+		if Trace: print('open')
 		if self.check_save():
 			# assert not modified
 			r = OpenFile(self.mainWindow)
 			if r != None:
 				fileName, prof = r
-				if Trace: print fileName
+				if Trace: print(fileName)
 				if self.mod['fileName'] != None:
 					saveCurPos(self.mod['fileName'], self.srcTextView)
 				self.do_open(fileName, prof)
 
 	def on_save (self, widget, data=None):
-		if Trace: print 'save'
+		if Trace: print('save')
 		r = self.do_save()
 
 	def on_save_as (self, widget, data=None):
-		if Trace: print 'save as'
+		if Trace: print('save as')
 		r = self.do_save(saveAs=True)
 
 	def on_print (self, widget, data=None):
-		if Trace: print 'print'
+		if Trace: print('print')
 
-		if self.mod['fileName'] == None:
-			fName = u''
+		if self.mod['fileName'] is None:
+			fName = ''
 		else:
-			fName = os.path.basename(self.mod['fileName']).decode(locale.getpreferredencoding())
+			fName = os.path.basename(self.mod['fileName'])
 		doPrint(self.mainWindow, self.srcTextView, fName)
 
 	def on_textview1_expose_event (self, widget, data=None):
-		# if Trace: print 'src expose event'
+		# if Trace: print('src expose event')
 		newModified = self.srcTextView.get_buffer().get_modified()
 		if newModified != self.mod['modified']:
 			self.mod['modified'] = newModified
@@ -1089,28 +1084,28 @@ class Application:
 
 	def on_menuitem3_activate (self, widget, data=None):
 	# def on_toolbutton1_clicked (self, widget, data=None):
-		if Trace: print 'compile'
+		if Trace: print('compile')
 		doCompile(self)
 
 	def on_menuitem5_activate (self, widget, data=None):
-		if Trace: print 'sharp comment'
+		if Trace: print('sharp comment')
 		textops.sharpComment(self.srcTextView.get_buffer())
 
 	def on_menuitem6_activate (self, widget, data=None):
-		if Trace: print 'sharp uncomment'
+		if Trace: print('sharp uncomment')
 		textops.sharpUnComment(self.srcTextView.get_buffer())
 
 	def on_menuitem7_activate (self, widget, data=None):
-		if Trace: print 'shift left'
+		if Trace: print('shift left')
 		textops.shiftLeft(self.srcTextView.get_buffer(), '\t')
 
 	def on_menuitem8_activate (self, widget, data=None):
-		if Trace: print 'shift right'
+		if Trace: print('shift right')
 		textops.shiftRight(self.srcTextView.get_buffer(), '\t', False)
 
 	def msg_set (self, text, errs=None, warns=None):
-		assert type(text) is unicode
-		self.msgTextView.get_buffer().set_text(text.encode('utf-8'))
+		assert type(text) is str
+		self.msgTextView.get_buffer().set_text(text)
 
 		def addLinks (l, tag):
 			if l != None:
@@ -1136,7 +1131,7 @@ class Application:
 		self.msgLinks = links
 
 	def on_menuitem10_activate (self, widget, data=None):
-		if Trace: print 'select font'
+		if Trace: print('select font')
 		old = self.settings['font']
 		new = SelectFont(self.mainWindow, old)
 		if old != new:
@@ -1146,7 +1141,7 @@ class Application:
 
 	def on_textview1_key_press_event (self, widget, event):
 		if event.keyval == Gdk.KEY_Escape:
-			if Trace: print 'ESC'
+			if Trace: print('ESC')
 
 			buffer = self.srcTextView.get_buffer()
 			bounds = buffer.get_selection_bounds()
@@ -1156,20 +1151,20 @@ class Application:
 
 	def msg_link_tag_event (self, tag, widget, event, iter):
 		if event.type == Gdk.EventType.BUTTON_RELEASE:
-			if Trace: print 'msg link tag event btn release'
+			if Trace: print('msg link tag event btn release')
 
 			msgLine = iter.get_line()
-			if Trace: print 'msg line:', msgLine
+			if Trace: print('msg line:', msgLine)
 
 			pos = self.msgLinks.get(msgLine, None)
 			srcLine, srcCol = pos
 
-			if Trace: print 'link to pos:', pos
+			if Trace: print('link to pos:', pos)
 
 			setCursorPos(self.srcTextView, srcLine, srcCol)
 
 			def srcTextViewGrabFocus ():
-				if Trace: print 'idle src view grab focus'
+				if Trace: print('idle src view grab focus')
 				self.srcTextView.grab_focus()
 				return False
 
@@ -1202,9 +1197,9 @@ class Application:
 		self.settings['modified'] = False
 
 		builder = Gtk.Builder()
-		# gladeFile = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'ide-gtk3.glade')
-		gladeFile = os.path.join( util.dataDir(), 'ide-gtk3.glade' )
-		if Trace: print 'gladeFile:', gladeFile
+		# gladeFile = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'ide-gtk3.ui')
+		gladeFile = os.path.join( util.dataDir(), 'ide-gtk3.ui' )
+		if Trace: print('gladeFile:', gladeFile)
 		builder.add_from_file( fileNameToGtk(gladeFile) )
 		builder.connect_signals(self)
 
@@ -1292,7 +1287,7 @@ def getProf (parent, fileName):
 		return False
 
 def main ():
-	x = locale.getdefaultlocale()[0]
+	x = locale.getlocale()[0]
 	if x != None:
 		setTrLang( x.split('_')[0] )
 
@@ -1311,7 +1306,7 @@ def main ():
 				Application( (fileName, prof) ).main()
 		else:
 			Application(None).main()
-		if Trace: print tr('#all done').encode(locale.getpreferredencoding())
+		if Trace: print(tr('#all done').encode(locale.getpreferredencoding()))
 
 if __name__ == '__main__':
 	main()

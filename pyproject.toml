@@ -1,0 +1,32 @@
+[project]
+name = "rops"
+version = "0.9"
+description = "simple text editor with syntax checking"
+readme = "README.md"
+requires-python = ">=3.10"
+authors = [
+	{name = "Alexander Shiryaev", email = "shiryaev.a.v@gmail.com"},
+]
+maintainers = [
+	{name = "Alexander Shiryaev", email = "shiryaev.a.v@gmail.com"}
+]
+classifiers = [
+	"Development Status :: 4 - Beta",
+	"Programming Language :: Python",
+]
+dependencies = [
+	"appdirs",
+	"pygobject",
+	"chardet",
+]
+
+[project.urls]
+Homepage = "https://github.com/aixp/rops"
+Issues = "https://github.com/aixp/rops/issues"
+
+[project.scripts]
+rops = "rops.ide_gtk3:main"
+rops-regexts = "rops.regexts:main"
+
+[tool.setuptools.package-data]
+rops = ["ide-gtk3.ui", "translations/*"]

@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
-# Alexander Shiryaev, 2010
+# Alexander Shiryaev, 2010, 2024
 
 import os, re
-from util import dataDir
+from .util import dataDir
 
 Trace = True
 
@@ -10,7 +10,7 @@ d = None
 
 def tr (s):
 	global d
-	assert type(s) is str # not unicode
+	assert type(s) is str
 	assert s.startswith('#')
 
 	f = s[1:]
@@ -20,19 +20,18 @@ def tr (s):
 		if t != None:
 			return t
 		else:
-			print 'NO TRANSLATION:', f
-			return unicode(f)
+			print('NO TRANSLATION:', f)
+			return f
 	else:
-		return unicode(f)
+		return f
 
 def load (lang):
 	# fileName = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'translations', lang)
 	fileName = os.path.join( dataDir(), 'translations', lang )
-	if Trace: print 'translation file:', fileName
+	if Trace: print('translation file:', fileName)
 	if os.path.exists(fileName):
-		fh = open(fileName, 'rb')
+		fh = open(fileName, 'r', encoding='utf-8')
 		d = {}
-		encoding = fh.readline().rstrip()
 		while True:
 			line = fh.readline()
 			if line == '':
@@ -45,14 +44,14 @@ def load (lang):
 					except ValueError:
 						break
 				f, t = l
-				d[f] = t.decode(encoding)
+				d[f] = t
 		fh.close()
 		return d
 	else:
-		if Trace: print 'no translation file found'
+		if Trace: print('no translation file found')
 		return None
 
 def setLang (lc):
 	global d
-	if Trace: print 'set translation lang:', lc
+	if Trace: print('set translation lang:', lc)
 	d = load(lc)

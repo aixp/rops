@@ -100,7 +100,7 @@ langToAlpha = {
 	'zh_tw': 'Traditional Chinese Big5',
 
 # http://www.science.co.il/language/locale-codes.asp
-	'sq': 'Central Europe', 
+	'sq': 'Central Europe',
 	'ar': 'Arabic',
 	'az': 'Cyrillic',
 	'fo': 'Latin I',
@@ -118,7 +118,7 @@ langToAlpha = {
 
 def localeToAlpha (localeName):
 	localeName = localeName.lower()
-	if langToAlpha.has_key(localeName):
+	if localeName in langToAlpha:
 		return langToAlpha[localeName]
 	elif '_' in localeName:
 		return langToAlpha.get(localeName.split('_')[0])

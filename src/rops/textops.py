@@ -10,7 +10,7 @@ def getSelLines (buffer):
 		endLine = endIt.get_line()
 		endCol = endIt.get_line_offset()
 		if endCol == 0: endLine = endLine - 1
-		if Trace: print startLine, endLine
+		if Trace: print(startLine, endLine)
 		assert startLine >= 0
 		assert endLine >= 0
 		assert startLine <= endLine
@@ -90,7 +90,7 @@ def sharpComment (buffer):
 		startLine, endLine = r
 
 		indent = calcMinIndent(buffer, startLine, endLine)
-		print 'indent:', indent
+		print('indent:', indent)
 
 		buffer.begin_user_action()
 		i = startLine
