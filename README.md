@@ -3,6 +3,7 @@
 ## Install
 
 ```shell
+sudo pacman -S gtksourceview3
 pip install .
 ```
 
