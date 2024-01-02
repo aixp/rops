@@ -601,12 +601,12 @@ def splitToLines (text):
 normalizeLineSep = lambda text, lineSep: lineSep.join( splitToLines(text) )
 
 # return values: None | matchStartIter, matchEndIter
-def doFind (start, textToFindEncoded, backward, ignoreCase):
-	assert type(textToFindEncoded) is str
+def doFind (start, textToFind: str, backward: bool, ignoreCase: bool):
+	assert type(textToFind) is str
 
 	if ignoreCase:
 		buffer = start.get_buffer()
-		textToFind = textToFindEncoded.lower()
+		textToFind = textToFind.lower()
 		if backward:
 			end = buffer.get_start_iter()
 			text = buffer.get_text(end, start, False).lower()
@@ -639,9 +639,9 @@ def doFind (start, textToFindEncoded, backward, ignoreCase):
 				found = None
 	else: # not ignore case
 		if backward:
-			found = start.backward_search(textToFindEncoded, 0, None)
+			found = start.backward_search(textToFind, 0, None)
 		else:
-			found = start.forward_search(textToFindEncoded, 0, None)
+			found = start.forward_search(textToFind, 0, None)
 	return found
 
 def doPrint (parent, textView, fileName):
@@ -706,14 +706,15 @@ class Application:
 		self.findWindow.present()
 
 	def do_find (self, start, backward):
-		textToFindEncoded = self.findStr.get_text()
-		if Trace: print('textToFind:', textToFindEncoded.encode(locale.getpreferredencoding()))
+		textToFind = self.findStr.get_text()
+		assert type(textToFind) is str
+		if Trace: print('textToFind:', textToFind.encode(locale.getpreferredencoding()))
 
-		if textToFindEncoded != '':
+		if textToFind != '':
 			ignoreCase = self.findIgnCase.get_active()
 			if Trace: print('ignoreCase:', ignoreCase)
 
-			found = doFind(start, textToFindEncoded, backward, ignoreCase)
+			found = doFind(start, textToFind, backward, ignoreCase)
 
 			if found:
 				if Trace: print('found')

@@ -209,13 +209,13 @@ def oo2cCompile (text: str, encodedText: bytes, encoding: str, fileName: str | N
 		r = None
 
 	if r is not None:
-		modName = r.group(1).encode('ascii')
+		modName = r.group(1)
 
 		fd, name = tempfile.mkstemp(prefix=modName + '.')
 		try:
 			try:
 				try:
-					os.write(fd, encodedText.replace('\t', ' '))
+					os.write(fd, encodedText.replace(b'\t', b' '))
 				except Exception as e:
 					msg = tr('#File write error') + ': ' + exMsg(e)
 					return (msg, None, None)
@@ -348,7 +348,7 @@ def dcc32Compile (text: str, encodedText: bytes, encoding: str, fileName: str | 
 
 	r = _pPas.match(text)
 	if r is not None:
-		modName = r.group(1).encode('ascii')
+		modName = r.group(1)
 		baseName = modName + '.$$$'
 
 		if fileName is None:
@@ -366,7 +366,7 @@ def dcc32Compile (text: str, encodedText: bytes, encoding: str, fileName: str | 
 		if not os.path.exists(fName):
 			try:
 				try:
-					util.writeFile( fName, encodedText.replace('\t', ' '), sync=False )
+					util.writeFile( fName, encodedText.replace(b'\t', b' '), sync=False )
 				except Exception as e:
 					msg = tr('#File write error') + ': ' + exMsg(e)
 					return (msg, None, None)
@@ -433,7 +433,7 @@ def fpcCompile (text: str, encodedText: bytes, encoding: str, fileName: str | No
 
 	r = _pPas.match(text)
 	if r is not None:
-		modName = r.group(1).encode('ascii')
+		modName = r.group(1)
 		baseName = modName + '.$$$'
 
 		if fileName == None:
@@ -451,7 +451,7 @@ def fpcCompile (text: str, encodedText: bytes, encoding: str, fileName: str | No
 		if not os.path.exists(fName):
 			try:
 				try:
-					util.writeFile( fName, encodedText.replace('\t', ' '), sync=False )
+					util.writeFile( fName, encodedText.replace(b'\t', b' '), sync=False )
 				except Exception as e:
 					msg = tr('#File write error') + ': ' + exMsg(e)
 					return (msg, None, None)
@@ -505,13 +505,13 @@ def gpcpCompile (text:str, encodedText: bytes, encoding: str, fileName: str | No
 
 	r = _pMod.match(text)
 	if r is not None:
-		modName = r.group(1).encode('ascii')
+		modName = r.group(1)
 		baseName = modName + '.$$$'
 
 		if not os.path.exists(baseName):
 			try:
 				try:
-					util.writeFile( baseName, encodedText.replace('\t', ' '), sync=False )
+					util.writeFile( baseName, encodedText.replace(b'\t', b' '), sync=False )
 				except Exception as e:
 					msg = tr('#File write error') + ': ' + exMsg(e)
 					return (msg, None, None)
@@ -581,7 +581,7 @@ def astrobeCompile (text: str, encodedText: bytes, encoding: str, fileName: str 
 
 	r = _pMod.match(text)
 	if r is not None:
-		modName = r.group(1).encode('ascii')
+		modName = r.group(1)
 		baseName = modName + '.$$$'
 
 		if fileName is None:
@@ -599,7 +599,7 @@ def astrobeCompile (text: str, encodedText: bytes, encoding: str, fileName: str 
 		if not os.path.exists(fName):
 			try: # for remove file fName
 				try:
-					util.writeFile( fName, encodedText.replace('\t', ' '), sync=False )
+					util.writeFile( fName, encodedText.replace(b'\t', b' '), sync=False )
 				except Exception as e:
 					msg = tr('#File write error') + ': ' + exMsg(e)
 					return (msg, None, None)
@@ -954,7 +954,7 @@ def xcmCompile (xCmd: str, text: str, encodedText: bytes, encoding: str, fileNam
 	try:
 		try:
 			try:
-				os.write(fd, encodedText.replace('\t', ' '))
+				os.write(fd, encodedText.replace(b'\t', b' '))
 			except Exception as e:
 				msg = tr('#File write error') + ': ' + exMsg(e)
 				return (msg, None, None)
