@@ -3,6 +3,7 @@
 # Alexander Shiryaev, 2010-2017, 2024
 #
 
+import tempfile
 import gi
 import traceback
 
@@ -445,7 +446,8 @@ def doCompile (base):
 		if base.mod['fileName'] is None:
 			allow = base.do_save()
 		elif base.srcTextView.get_buffer().get_modified():
-			bakFileName = os.tempnam(os.path.dirname(os.path.realpath(base.mod['fileName'])), os.path.basename(base.mod['fileName'] + '.'))
+			# bakFileName = os.tempnam(os.path.dirname(os.path.realpath(base.mod['fileName'])), os.path.basename(base.mod['fileName'] + '.'))
+			bakFileName = tempfile.mktemp(dir=os.path.dirname(os.path.realpath(base.mod['fileName'])), prefix= os.path.basename(base.mod['fileName'] + '.'))
 			try:
 				os.rename(base.mod['fileName'], bakFileName)
 			except Exception as e:
