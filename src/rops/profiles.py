@@ -745,6 +745,29 @@ def cCompile (text: str, encodedText: bytes, encoding: str, fileName: str):
 		i = i + 1
 	return (msg, errs, warns)
 
+def typstCompile (text: str, encodedText: bytes, encoding: str, fileName: str | None):
+	assert type(text) is str
+	assert type(encodedText) is bytes
+	assert encoding is not None
+	assert fileName is not None # because compileSavedOnly
+
+	try:
+		e, o = cmd(["typst", "compile", fileName])
+	except Exception as e:
+		msg = 'typst: ' + exMsg(e)
+		return (msg, None, None)
+
+	e = e.decode(encoding)
+	o = o.decode(encoding)
+	msg = e + o
+
+	i = 0
+	errs = []
+	warns = []
+	for l in e.split('\n'):
+		i = i + 1
+	return (msg, errs, warns)
+
 _pGenieLineCol = re.compile('^([^:]+):([1-9][0-9]*)\.([1-9][0-9]*)-([1-9][0-9]*)\.([1-9][0-9]*): ([^\n]+)\n')
 
 def genieCompile (text: str, encodedText: bytes, encoding: str, fileName: str):
@@ -1609,11 +1632,21 @@ pyCoco = {
 #	'lang': 'latex', # gtksourceview
 #	'style': ('tango', 'kate', 'classic'), # gtksourceview
 #	'extensions': ('tex',),
-#	'compile': cCompile,
 #	'compileSavedOnly': True, # FIXME
 #	'compile': latexCompile,
 #	'empty': '', # FIXME
 #}
+
+typst = {
+	'name': 'typst',
+	'lang': 'typst', # gtksourceview
+	'style': ('kate',), # gtksourceview
+	'extensions': ('typ',),
+	'compile': typstCompile,
+	'compileSavedOnly': True,
+	'empty': '',
+	'preferredFileEncoding': 'utf-8',
+}
 
 profiles = (
 	vocO2, vocOC, oo2c, obc, astrobeLPC2000, astrobeM3, astrobeM4, gpcp, zc, xcO2, xmO2, xcM2, xmM2, mocka, mikroPascal,
@@ -1625,6 +1658,7 @@ profiles = (
 	umbriel, oberon0,
 	pyCoco,
 #	latex,
+	typst,
 	dev0,
 	iverilog, gvhdl,
 )
