@@ -1177,19 +1177,22 @@ class Application:
 		s = self.mainWindow.get_screen()
 		d = s.get_display()
 		m = d.get_primary_monitor()
-		g = m.get_geometry()
-		w = g.width
-		h = g.height
+		if m is not None:
+			g = m.get_geometry()
+			w = g.width
+			h = g.height
 
-		height = 4 * h / 5
-		width = height * h / w
-		x = int(round(w / width))
-		if x <= 0:
-			x = 1
-		width = w / x
+			height = 4 * h / 5
+			width = height * h / w
+			x = int(round(w / width))
+			if x <= 0:
+				x = 1
+			width = w / x
 
-		self.mainWindow.set_property("default_width", width)
-		self.mainWindow.set_property("default_height", height)
+			self.mainWindow.set_property("default_width", width)
+			self.mainWindow.set_property("default_height", height)
+		else:
+			print("WARNING: can not get primary monitor")
 
 	def __init__ (self, par):
 		self.msgLinks = None

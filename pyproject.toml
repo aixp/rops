@@ -1,6 +1,6 @@
 [project]
 name = "rops"
-version = "0.9"
+version = "0.10"
 description = "simple text editor with syntax checking"
 readme = "README.md"
 requires-python = ">=3.10"
